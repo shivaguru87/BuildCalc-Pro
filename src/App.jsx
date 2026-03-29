@@ -23,7 +23,7 @@ export default function App() {
 
       {page !== "home" && (
         <button className="ghost" onClick={() => setPage("home")}>
-          ? Back
+           Back
         </button>
       )}
 
