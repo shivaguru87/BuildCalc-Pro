@@ -16,6 +16,27 @@
   --accent2: #22d3ee;
   --border: #1f2937;
 }
+/* Tabs wrapper inside card */
+.tabs-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+
+/* Tabs row */
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+/* Tab buttons */
+.tabs button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #e5e7eb;
+  
 * { box-sizing: border-box; }
 body {
   margin: 0;
