@@ -5,37 +5,33 @@ import Input from "../components/Input";
 export default function Staircase() {
   const [type, setType] = useState("straight");
 
-  // MASTER INPUTS
-  const [L, setL] = useState(12); // length ft
-  const [W, setW] = useState(7.5); // width ft
-  const [H, setH] = useState(10); // height ft
+  // Default realistic values
+  const [L, setL] = useState(12);
+  const [W, setW] = useState(7.5);
+  const [H, setH] = useState(10);
 
-  // =========================
-  // CORE ENGINE
-  // =========================
   const calc = useMemo(() => {
+    if (L <= 0 || W <= 0 || H <= 0) return null;
+
     const heightInch = H * 12;
 
-    // Ideal rise (6–7 inch safe)
     const idealRise = 6.5;
-
     const steps = Math.max(1, Math.round(heightInch / idealRise));
     const actualRise = heightInch / steps;
 
-    // Blondel formula (2R + T = 24–25)
     let tread = 24 - 2 * actualRise;
-    if (tread < 9) tread = 9; // safety lower bound
-    if (tread > 12) tread = 12; // comfort cap
+    if (tread < 9) tread = 9;
+    if (tread > 12) tread = 12;
 
     const treadFt = tread / 12;
 
     // Straight
     const totalRunStraight = steps * treadFt;
 
-    // Dog Leg
+    // Dog leg
     const stepsPerFlight = Math.ceil(steps / 2);
     const runPerFlight = stepsPerFlight * treadFt;
-    const landing = Math.max(3, W); // landing ≥ width
+    const landing = Math.max(3, W);
     const totalDogLength = runPerFlight + landing;
 
     // Open well
@@ -68,9 +64,7 @@ export default function Staircase() {
 
   return (
     <Card>
-      {/* ========================= */}
-      {/* TABS */}
-      {/* ========================= */}
+      {/* ================= TABS ================= */}
       <div className="tabs">
         {["straight", "dog", "open", "spiral"].map((t) => (
           <button
@@ -83,19 +77,40 @@ export default function Staircase() {
         ))}
       </div>
 
-      {/* ========================= */}
-      {/* MASTER INPUT */}
-      {/* ========================= */}
-      <Input label="Total Length (ft)" value={L} onChange={setL} />
-      <Input label="Total Width (ft)" value={W} onChange={setW} />
-      <Input label="Floor Height (ft)" value={H} onChange={setH} />
+      {/* ================= INPUTS ================= */}
+      <Input
+        label="Total Length"
+        unit="ft"
+        value={L}
+        onChange={setL}
+        hint="Available horizontal space"
+      />
+
+      <Input
+        label="Total Width"
+        unit="ft"
+        value={W}
+        onChange={setW}
+        hint="Staircase width"
+      />
+
+      <Input
+        label="Floor Height"
+        unit="ft"
+        value={H}
+        onChange={setH}
+        hint="Floor to floor height"
+      />
 
       <hr />
 
-      {/* ========================= */}
-      {/* STRAIGHT */}
-      {/* ========================= */}
-      {type === "straight" && (
+      {/* ================= VALIDATION ================= */}
+      {!calc && (
+        <p style={{ color: "red" }}>Enter valid dimensions</p>
+      )}
+
+      {/* ================= STRAIGHT ================= */}
+      {calc && type === "straight" && (
         <>
           <h4>Straight Stair</h4>
           <p>Steps: {calc.steps}</p>
@@ -112,12 +127,10 @@ export default function Staircase() {
         </>
       )}
 
-      {/* ========================= */}
-      {/* DOG LEG */}
-      {/* ========================= */}
-      {type === "dog" && (
+      {/* ================= DOG LEG ================= */}
+      {calc && type === "dog" && (
         <>
-          <h4>Dog Leg Stair (with landing)</h4>
+          <h4>Dog Leg Stair</h4>
 
           <p>Total Steps: {calc.steps}</p>
           <p>Steps / Flight: {calc.stepsPerFlight}</p>
@@ -126,36 +139,30 @@ export default function Staircase() {
           <p>Run / Flight: {calc.runPerFlight.toFixed(2)} ft</p>
           <p>Total Length Used: {calc.totalDogLength.toFixed(2)} ft</p>
 
-          <p>Width: {W} ft</p>
-
           {calc.totalDogLength > L && (
             <p style={{ color: "red" }}>
-              ❌ Not fitting → Reduce tread or increase length
+              ❌ Not fitting → Adjust space or design
             </p>
           )}
         </>
       )}
 
-      {/* ========================= */}
-      {/* OPEN WELL */}
-      {/* ========================= */}
-      {type === "open" && (
+      {/* ================= OPEN WELL ================= */}
+      {calc && type === "open" && (
         <>
           <h4>Open Well Stair</h4>
 
           <p>Steps: {calc.steps}</p>
           <p>Central Gap: {calc.gap.toFixed(2)} ft</p>
-          <p>Each Flight Width: {calc.flightWidth.toFixed(2)} ft</p>
+          <p>Flight Width: {calc.flightWidth.toFixed(2)} ft</p>
 
           <p>Rise: {calc.actualRise.toFixed(2)} inch</p>
           <p>Tread: {calc.tread.toFixed(2)} inch</p>
         </>
       )}
 
-      {/* ========================= */}
-      {/* SPIRAL */}
-      {/* ========================= */}
-      {type === "spiral" && (
+      {/* ================= SPIRAL ================= */}
+      {calc && type === "spiral" && (
         <>
           <h4>Spiral Stair</h4>
 
