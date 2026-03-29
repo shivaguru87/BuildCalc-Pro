@@ -20,6 +20,10 @@ export default function Home({ setPage }) {
         <button className="primary" onClick={() => setPage("brick")}>
            Brick
         </button>
+        <button className="primary" onClick={() => setPage("areapro")}>
+  		    Area Pro
+	     </button>
+
 
       </div>
     </Card>
