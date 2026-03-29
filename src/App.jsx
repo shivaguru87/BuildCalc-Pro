@@ -6,6 +6,7 @@ import Volume from "./calculators/Volume";
 import Sand from "./calculators/SandTruck";
 import Brick from "./calculators/Brick";
 import AreaPro from "./calculators/AreaPro";
+import Staircase from "./calculators/Staircase";
 import "./styles.css";
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
       {page === "sand" && <Sand />}
       {page === "brick" && <Brick />}
       {page === "areapro" && <AreaPro />}
+      {page === "stair" && <Staircase />}
 
       {page !== "home" && (
         <button className="ghost" onClick={() => setPage("home")}>
