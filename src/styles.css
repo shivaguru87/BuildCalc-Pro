@@ -59,6 +59,38 @@
   color: white;
   font-weight: 600;
 }
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #e5e7eb;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
+  color: white;
+  font-weight: 600;
+}
+
+.card {
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 16px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 8px;
+}
 
 body {
   margin: 0;
