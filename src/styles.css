@@ -16,6 +16,8 @@
   --accent2: #22d3ee;
   --border: #1f2937;
 }
+* { box-sizing: border-box; }
+
 /* Tabs wrapper inside card */
 .tabs-container {
   width: 100%;
@@ -36,8 +38,8 @@
   border-radius: 8px;
   border: none;
   background: #e5e7eb;
-  
-* { box-sizing: border-box; }
+}
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
