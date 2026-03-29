@@ -21,12 +21,16 @@ export default function Staircase() {
 
       {/* TABS */}
       <div className="tabs">
-        {["straight","dog","open","spiral"].map(t => (
-          <button key={t} onClick={() => setType(t)}>
-            {t.toUpperCase()}
-          </button>
-        ))}
-      </div>
+  {["straight", "dog", "open", "spiral"].map((t) => (
+    <button
+      key={t}
+      className={type === t ? "tab active" : "tab"}
+      onClick={() => setType(t)}
+    >
+      {t.toUpperCase()}
+    </button>
+  ))}
+</div>
 
       {/* INPUTS */}
       <Input label="Floor Height (ft)" onChange={setFloor} />
