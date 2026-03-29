@@ -1,9 +1,9 @@
-export default function Input({ label, onChange }) {
+export default function Input({ label, value, onChange }) {
   return (
     <input
-      type="number"
       placeholder={label}
-      onChange={(e) => onChange(Number(e.target.value))}
+      value={value}
+      onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
     />
   );
 }
