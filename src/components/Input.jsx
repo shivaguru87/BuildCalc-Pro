@@ -1,9 +1,26 @@
-export default function Input({ label, value, onChange }) {
+export default function Input({ label, unit, value, onChange, hint }) {
   return (
-    <input
-      placeholder={label}
-      value={value}
-      onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-    />
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ fontSize: 13, marginBottom: 4 }}>
+        {label} {unit && <span style={{ opacity: 0.6 }}>({unit})</span>}
+      </div>
+
+      <input
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+        style={{
+          width: "100%",
+          padding: 10,
+          borderRadius: 8,
+          border: "1px solid #ccc"
+        }}
+      />
+
+      {hint && (
+        <div style={{ fontSize: 11, opacity: 0.6 }}>
+          {hint}
+        </div>
+      )}
+    </div>
   );
 }
