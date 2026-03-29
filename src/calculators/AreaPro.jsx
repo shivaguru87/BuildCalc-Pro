@@ -34,12 +34,6 @@ export default function AreaPro() {
         ))}
       </div>
 	</div>
-        {["rectangle","square","circle","triangle","trapezium","cone","cylinder"].map(t => (
-          <button key={t} onClick={() => setType(t)}>
-            {t.toUpperCase()}
-          </button>
-        ))}
-      </div>
 
       {/* RECTANGLE */}
       {type === "rectangle" && (
