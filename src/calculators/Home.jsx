@@ -23,6 +23,11 @@ export default function Home({ setPage }) {
         <button className="primary" onClick={() => setPage("areapro")}>
   		    Area Pro
 	     </button>
+		</button>
+	<button className="primary"  onClick={() => setPage("stair")}>
+  	    Staircase
+	</button>
+
 
 
       </div>
