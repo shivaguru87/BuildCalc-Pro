@@ -25,7 +25,15 @@ export default function AreaPro() {
     <Card title="Area Calculator Pro">
 
       {/* SELECTOR */}
-      <div className="tabs">
+      <div className="tabs-container">
+  	<div className="tabs">
+        {["rectangle","square","circle","triangle","trapezium","cone","cylinder"].map(t => (
+          <button key={t} onClick={() => setType(t)}>
+            {t.toUpperCase()}
+          </button>
+        ))}
+      </div>
+	</div>
         {["rectangle","square","circle","triangle","trapezium","cone","cylinder"].map(t => (
           <button key={t} onClick={() => setType(t)}>
             {t.toUpperCase()}
