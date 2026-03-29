@@ -65,6 +65,12 @@
   margin-bottom: 12px;
 }
 
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
 .tab {
   flex: 1;
   padding: 10px;
@@ -88,8 +94,6 @@
 
 input {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 8px;
 }
 
 body {
