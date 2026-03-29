@@ -39,6 +39,26 @@
   border: none;
   background: #e5e7eb;
 }
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tab {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  background: #e5e7eb;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
+  color: white;
+  font-weight: 600;
+}
 
 body {
   margin: 0;
