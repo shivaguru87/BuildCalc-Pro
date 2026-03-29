@@ -2,7 +2,7 @@ import Card from "../components/Card";
 
 export default function Home({ setPage }) {
   return (
-    <Card>
+	  <Card>
       <div className="grid">
 
         <button className="primary" onClick={() => setPage("pcc")}>
@@ -23,12 +23,9 @@ export default function Home({ setPage }) {
         <button className="primary" onClick={() => setPage("areapro")}>
   		    Area Pro
 	     </button>
-		</button>
-	<button className="primary"  onClick={() => setPage("stair")}>
+		<button className="primary"  onClick={() => setPage("stair")}>
   	    Staircase
-	</button>
-
-
+		</button>
 
       </div>
     </Card>
