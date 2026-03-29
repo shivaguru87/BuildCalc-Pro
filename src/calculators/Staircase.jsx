@@ -31,6 +31,10 @@ export default function Staircase() {
     </button>
   ))}
 </div>
+      {type === "straight" && <p>Straight Stair Selected</p>}
+      {type === "dog" && <p>Dog Leg Stair Selected</p>}
+     {type === "open" && <p>Open Stair Selected</p>}
+     {type === "spiral" && <p>Spiral Stair Selected</p>}
 
       {/* INPUTS */}
       <Input label="Floor Height (ft)" onChange={setFloor} />
