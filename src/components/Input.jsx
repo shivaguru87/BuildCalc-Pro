@@ -1,32 +1,37 @@
-export default function Input({
-  label,
-  unit,
-  value,
-  onChange,
-  hint
-}) {
+export default function Input({ label, unit, value, onChange, hint }) {
   const handleChange = (e) => {
     const val = e.target.value;
 
-    // ✅ Allow decimal typing
+    // ✅ allow decimals like 7.5
     if (/^\d*\.?\d*$/.test(val)) {
       onChange(val);
     }
   };
 
   return (
-    <div className="input-group">
-      <label>{label} ({unit})</label>
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ fontSize: 13, marginBottom: 4 }}>
+        {label} {unit && <span style={{ opacity: 0.6 }}>({unit})</span>}
+      </div>
 
       <input
-        type="text"                 // ✅ IMPORTANT (not number)
-        inputMode="decimal"         // mobile keyboard support
+        type="text"              // ✅ important change
+        inputMode="decimal"      // ✅ mobile support
         value={value}
         onChange={handleChange}
-        placeholder={`Enter ${label}`}
+        style={{
+          width: "100%",
+          padding: 10,
+          borderRadius: 8,
+          border: "1px solid #ccc"
+        }}
       />
 
-      {hint && <small>{hint}</small>}
+      {hint && (
+        <div style={{ fontSize: 11, opacity: 0.6 }}>
+          {hint}
+        </div>
+      )}
     </div>
   );
 }
