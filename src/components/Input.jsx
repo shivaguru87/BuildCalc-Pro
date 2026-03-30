@@ -23,3 +23,4 @@ export default function Input({ label, unit, value, onChange, hint }) {
       )}
     </div>
   );
+}
