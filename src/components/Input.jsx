@@ -2,9 +2,14 @@ export default function Input({ label, unit, value, onChange, hint }) {
   const handleChange = (e) => {
     const val = e.target.value;
 
-    // ✅ allow decimals like 7.5
+    // ✅ allow typing decimal (7.5 etc.)
     if (/^\d*\.?\d*$/.test(val)) {
-      onChange(val);
+      // ✅ if empty, send 0 (same as your original behavior)
+      if (val === "") {
+        onChange(0);
+      } else {
+        onChange(parseFloat(val));
+      }
     }
   };
 
@@ -15,8 +20,8 @@ export default function Input({ label, unit, value, onChange, hint }) {
       </div>
 
       <input
-        type="text"              // ✅ important change
-        inputMode="decimal"      // ✅ mobile support
+        type="text"               // allow decimal typing
+        inputMode="decimal"
         value={value}
         onChange={handleChange}
         style={{
@@ -28,7 +33,7 @@ export default function Input({ label, unit, value, onChange, hint }) {
       />
 
       {hint && (
-        <div style={{ fontSize: 11, opacity: 0.6 }}>
+        <div style={{ fontSize: 11, opacity: 0.7, color: "#555" }}>
           {hint}
         </div>
       )}
