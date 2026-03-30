@@ -7,7 +7,6 @@
   --accent2: #06b6d4;
   --border: #e5e7eb;
 }
-
 .dark {
   --bg: #0b1220;
   --card: #111827;
@@ -17,13 +16,54 @@
   --accent2: #22d3ee;
   --border: #1f2937;
 }
-
 * { box-sizing: border-box; }
 
-/* ================= TABS ================= */
+/* Tabs wrapper inside card */
 .tabs-container {
   width: 100%;
   overflow-x: auto;
+  margin-bottom: 12px;
+}
+
+/* Tabs row */
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+/* Tab buttons */
+.tabs button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #e5e7eb;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tab {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  background: #e5e7eb;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
+  color: white;
+  font-weight: 600;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
@@ -31,14 +71,6 @@
   display: flex;
   gap: 8px;
   margin-bottom: 12px;
-  flex-wrap: nowrap;
-}
-
-.tabs button {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: none;
-  background: #e5e7eb;
 }
 
 .tab {
@@ -56,22 +88,16 @@
   font-weight: 600;
 }
 
-/* ================= CARD ================= */
 .card {
-  background: var(--card);
+  background: #f9fafb;
   padding: 16px;
-  border-radius: 18px;
-  margin-bottom: 14px;
-  border: 1px solid var(--border);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+  border-radius: 16px;
 }
 
-/* ================= INPUT ================= */
 input {
   width: 100%;
 }
 
-/* ================= STAIRCASE ================= */
 .staircase-container {
   max-width: 420px;
   margin: auto;
@@ -81,20 +107,23 @@ input {
   color: white;
 }
 
-.staircase-container .tabs {
+.tabs {
+  display: flex;
+  gap: 8px;
   margin-bottom: 15px;
 }
 
-.staircase-container .tabs button {
+.tabs button {
   flex: 1;
   padding: 8px;
+  border: none;
   border-radius: 8px;
   background: #333;
   color: white;
   cursor: pointer;
 }
 
-.staircase-container .tabs button.active {
+.tabs button.active {
   background: #00bcd4;
 }
 
@@ -103,25 +132,17 @@ input {
 }
 
 .input-group input {
+  width: 100%;
   padding: 8px;
   border-radius: 6px;
   border: none;
   margin-top: 5px;
 }
 
-/* ================= HINT FIX (SAFE) ================= */
-.input-group div {
-  color: #555;
-  opacity: 1;
-  font-size: 11px;
-}
-
-/* Staircase hint override (dark mode only) */
-.staircase-container small {
+small {
   color: #aaa;
 }
 
-/* ================= COMMON ================= */
 .error {
   color: red;
   margin-bottom: 10px;
@@ -144,99 +165,51 @@ input {
   border-radius: 10px;
 }
 
-/* ================= BASE ================= */
 body {
   margin: 0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   background: var(--bg);
   color: var(--text);
 }
-
-.container {
+.container { padding: 16px; max-width: 520px; margin: auto; }
+.header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.title { font-weight:700; font-size:20px; }
+.sub { color: var(--muted); font-size:12px; }
+.card {
+  background: var(--card);
   padding: 16px;
-  max-width: 520px;
-  margin: auto;
+  border-radius: 18px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.06);
 }
-
-.header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:12px;
-}
-
-.title {
-  font-weight:700;
-  font-size:20px;
-}
-
-.sub {
-  color: var(--muted);
-  font-size:12px;
-}
-
-.grid {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 button.primary {
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:12px;
+  width:100%; padding:12px; border:none; border-radius:12px;
   background: linear-gradient(90deg, var(--accent), var(--accent2));
-  color:white;
-  font-weight:600;
-  margin-top:10px;
+  color:white; font-weight:600; margin-top:10px;
 }
-
 button.ghost {
-  width:100%;
-  padding:10px;
-  border-radius:12px;
-  border:1px solid var(--border);
-  background: transparent;
-  color: var(--text);
+  width:100%; padding:10px; border-radius:12px; border:1px solid var(--border);
+  background: transparent; color: var(--text);
 }
-
 .input {
-  width:100%;
-  padding:12px;
-  border-radius:12px;
-  border:1px solid var(--border);
-  margin-top:10px;
-  outline:none;
-  font-size:14px;
-  background: transparent;
-  color: var(--text);
+  width:100%; padding:12px; border-radius:12px; border:1px solid var(--border);
+  margin-top:10px; outline:none; font-size:14px; background: transparent; color: var(--text);
 }
-
-.row {
-  display:flex;
-  gap:10px;
-  align-items:center;
-  justify-content:space-between;
-}
-
+.row { display:flex; gap:10px; align-items:center; justify-content:space-between; }
 .badge {
-  display:inline-block;
-  padding:4px 8px;
-  border-radius:999px;
-  background: rgba(37,99,235,0.12);
-  color: var(--accent);
-  font-size:12px;
-  margin-left:6px;
+  display:inline-block; padding:4px 8px; border-radius:999px;
+  background: rgba(37,99,235,0.12); color: var(--accent); font-size:12px; margin-left:6px;
 }
-
-.result p {
-  margin:6px 0;
+.result {
+  margin-top:12px; padding:12px; border-radius:14px; border:1px dashed var(--border);
 }
-
-.footer {
-  font-size:12px;
-  color: var(--muted);
-  text-align:center;
-  margin-top:8px;
+.result p { margin:6px 0; }
+.tabs { display:flex; gap:8px; margin-bottom:8px; }
+.tab {
+  flex:1; padding:10px; border-radius:12px; border:1px solid var(--border);
+  text-align:center; font-weight:600; cursor:pointer;
 }
+.tab.active { background: linear-gradient(90deg, var(--accent), var(--accent2)); color:#fff; border:none; }
+.footer { font-size:12px; color: var(--muted); text-align:center; margin-top:8px; }
