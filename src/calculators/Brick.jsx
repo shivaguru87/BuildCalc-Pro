@@ -15,7 +15,7 @@ export default function Brick() {
   const calc = () => {
     const lf = toFeet(l, unit);
     const hf = toFeet(h, unit);
-    const tf = toFeet(t, unit);
+    const tf = Number(t) / 12;
     const r = brickCalc(lf, hf, tf);
     setRes({
       volume: r.volume.toFixed(2),
@@ -42,7 +42,7 @@ export default function Brick() {
 
       <Input label="Length" unit={unit} value={l} onChange={setL} hint="Wall length" />
       <Input label="Height" unit={unit} value={h} onChange={setH} hint="Wall height" />
-      <Input label="Thickness" unit={unit} value={t} onChange={setT} hint="Wall thickness" />
+      <Input label="Thickness" unit="in" value={t} onChange={setT} hint="Wall thickness (inches)" />
 
       <button className="primary" onClick={calc}>Calculate</button>
 
