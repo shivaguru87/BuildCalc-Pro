@@ -40,9 +40,9 @@ export default function Brick() {
         ]}
       />
 
-      <Input placeholder="Length" value={l} onChange={(e) => setL(e.target.value)} />
-      <Input placeholder="Height" value={h} onChange={(e) => setH(e.target.value)} />
-      <Input placeholder="Thickness" value={t} onChange={(e) => setT(e.target.value)} />
+      <Input label="Length" unit={unit} value={l} onChange={setL} hint="Wall length" />
+      <Input label="Height" unit={unit} value={h} onChange={setH} hint="Wall height" />
+      <Input label="Thickness" unit={unit} value={t} onChange={setT} hint="Wall thickness" />
 
       <button className="primary" onClick={calc}>Calculate</button>
 
