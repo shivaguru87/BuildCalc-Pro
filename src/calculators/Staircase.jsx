@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./staircase.css";
+import "./styles.css";
 
 <button
   className={`tab ${type === t ? "active" : ""}`}
