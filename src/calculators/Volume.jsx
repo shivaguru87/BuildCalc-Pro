@@ -13,7 +13,7 @@ export default function Volume() {
   const [res, setRes] = useState(null);
 
   const calc = () => {
-    const lf = toFeet(l, unit);
+    const lf = toFeet(Number(l), unit);
     const wf = toFeet(w, unit);
     const hf = toFeet(h, unit);
     const r = volumeCalc(lf, wf, hf);
