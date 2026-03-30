@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import "./staircase.css";
 
+<button
+  className={`tab ${type === t ? "active" : ""}`}
+  onClick={() => setType(t)}
+>
+  {t.toUpperCase()}
+</button>
+
 export default function Staircase() {
   const [type, setType] = useState("straight");
 
