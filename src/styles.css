@@ -30,9 +30,18 @@
   display: flex;
   gap: 8px;
   margin-bottom: 12px;
+  flex-wrap: nowrap;
 }
 
-/* Tab button */
+/* Tab buttons (global - unchanged behavior) */
+.tabs button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #e5e7eb;
+}
+
+/* Tab component */
 .tab {
   flex: 1;
   padding: 10px;
@@ -40,7 +49,6 @@
   border: none;
   background: #e5e7eb;
   cursor: pointer;
-  white-space: nowrap;
 }
 
 /* Active tab */
@@ -57,7 +65,12 @@
   border-radius: 16px;
 }
 
-/* ================= STAIRCASE (DARK) ================= */
+/* ================= GLOBAL INPUT ================= */
+input {
+  width: 100%;
+}
+
+/* ================= STAIRCASE ONLY (SCOPED) ================= */
 .staircase-container {
   max-width: 420px;
   margin: auto;
@@ -67,62 +80,62 @@
   color: white;
 }
 
-/* ================= INPUTS ================= */
-.input-group {
+/* Override tabs ONLY inside staircase */
+.staircase-container .tabs {
   margin-bottom: 15px;
 }
 
-.input-group input {
-  width: 100%;
+.staircase-container .tabs button {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  background: #333;
+  color: white;
+  cursor: pointer;
+}
+
+.staircase-container .tabs button.active {
+  background: #00bcd4;
+}
+
+/* Staircase inputs */
+.staircase-container .input-group {
+  margin-bottom: 15px;
+}
+
+.staircase-container .input-group input {
   padding: 8px;
   border-radius: 6px;
   border: none;
   margin-top: 5px;
 }
 
-/* ================= HINTS (FIXED) ================= */
-/* Global hint styling (for PCC + others) */
-.input-group small,
-.input-group div {
-  color: #666;
-  font-size: 11px;
-  opacity: 0.8;
-}
-
-/* Staircase-specific hint override (dark theme) */
+/* Staircase hint only (no global break) */
 .staircase-container small {
   color: #aaa;
 }
 
-/* ================= ERROR ================= */
+/* ================= COMMON ================= */
 .error {
   color: red;
   margin-bottom: 10px;
 }
 
-/* ================= BUTTON ================= */
 .calculate-btn {
   width: 100%;
   padding: 10px;
-  background: linear-gradient(90deg, #2563eb, #06b6d4);
+  background: #00bcd4;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
-  color: white;
 }
 
-/* ================= RESULT ================= */
 .result {
   margin-top: 20px;
   padding: 15px;
   background: #2c2c2c;
   border-radius: 10px;
-}
-
-/* ================= GLOBAL INPUT ================= */
-input {
-  width: 100%;
 }
   
 body {
