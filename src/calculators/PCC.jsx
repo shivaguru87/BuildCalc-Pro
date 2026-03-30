@@ -69,12 +69,12 @@ export default function PCC() {
 
       {mode === "exact" ? (
         <>
-          <Input placeholder="Length" value={l} onChange={(e) => setL(e.target.value)} />
-          <Input placeholder="Width" value={w} onChange={(e) => setW(e.target.value)} />
-          <Input placeholder="Thickness" value={t} onChange={(e) => setT(e.target.value)} />
+          <Input label="Length" unit={unit} value={l} onChange={setL} hint="Enter length" />
+          <Input label="Width" unit={unit} value={w} onChange={setW} hint="Enter width" />
+          <Input label="Thickness" unit={unit} value={t} onChange={setT} hint="Slab thickness" />
         </>
       ) : (
-        <Input placeholder="Area (sq.ft)" value={area} onChange={(e) => setArea(e.target.value)} />
+        <Input label="Area" unit="sq.ft" value={area} onChange={setArea} hint="Total area" />
       )}
 
       <button className="primary" onClick={calc}>Calculate</button>
