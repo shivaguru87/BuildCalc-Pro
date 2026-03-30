@@ -18,7 +18,7 @@
 }
 * { box-sizing: border-box; }
 
-/* Tabs wrapper (scrollable if needed) */
+/* Tabs wrapper inside card */
 .tabs-container {
   width: 100%;
   overflow-x: auto;
@@ -29,91 +29,27 @@
 .tabs {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
+  flex-wrap: nowrap;
 }
 
 /* Tab buttons */
-.tab {
-  flex: 1;
-  padding: 10px;
-  border-radius: 10px;
+.tabs button {
+  padding: 8px 12px;
+  border-radius: 8px;
   border: none;
   background: #e5e7eb;
-  cursor: pointer;
-  white-space: nowrap;
+}
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-/* Active tab */
-.tab.active {
-  background: linear-gradient(90deg, #2563eb, #06b6d4);
-  color: white;
-  font-weight: 600;
-}
-
-/* Card layout */
-.card {
-  background: #f9fafb;
-  padding: 16px;
-  border-radius: 16px;
-}
-
-/* Main container (dark theme) */
-.staircase-container {
-  max-width: 420px;
-  margin: auto;
-  padding: 20px;
-  background: #1e1e1e;
-  border-radius: 12px;
-  color: white;
-}
-
-/* Inputs */
-.input-group {
-  margin-bottom: 15px;
-}
-
-.input-group input {
-  width: 100%;
+.tab {
+  flex: 1;
   padding: 8px;
-  border-radius: 6px;
-  border: none;
-  margin-top: 5px;
-}
-
-/* Helper text */
-small {
-  color: #aaa;
-}
-
-/* Error */
-.error {
-  color: red;
-  margin-bottom: 10px;
-}
-
-/* Button */
-.calculate-btn {
-  width: 100%;
-  padding: 10px;
-  background: #00bcd4;
-  border: none;
   border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-/* Result box */
-.result {
-  margin-top: 20px;
-  padding: 15px;
-  background: #2c2c2c;
-  border-radius: 10px;
-}
-
-/* Global input fallback */
-input {
-  width: 100%;
-}
+  border: none;
 
 body {
   margin: 0;
