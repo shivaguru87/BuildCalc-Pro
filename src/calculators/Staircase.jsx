@@ -5,26 +5,15 @@ import Input from "../components/Input";
 export default function Staircase() {
   const [type, setType] = useState("straight");
 
-  // Default realistic values (kept same)
-  const [L, setL] = useState("12");
-  const [W, setW] = useState("7.5");
-  const [H, setH] = useState("10");
-
-  // ✅ Decimal-safe handler
-  const handleDecimal = (val, setter) => {
-    if (/^\d*\.?\d*$/.test(val)) {
-      setter(val);
-    }
-  };
+  // Default realistic values
+  const [L, setL] = useState(12);
+  const [W, setW] = useState(7.5);
+  const [H, setH] = useState(10);
 
   const calc = useMemo(() => {
-    const length = parseFloat(L);
-    const width = parseFloat(W);
-    const height = parseFloat(H);
+    if (L <= 0 || W <= 0 || H <= 0) return null;
 
-    if (length <= 0 || width <= 0 || height <= 0) return null;
-
-    const heightInch = height * 12;
+    const heightInch = H * 12;
 
     const idealRise = 6.5;
     const steps = Math.max(1, Math.round(heightInch / idealRise));
@@ -42,15 +31,15 @@ export default function Staircase() {
     // Dog leg
     const stepsPerFlight = Math.ceil(steps / 2);
     const runPerFlight = stepsPerFlight * treadFt;
-    const landing = Math.max(3, width);
+    const landing = Math.max(3, W);
     const totalDogLength = runPerFlight + landing;
 
     // Open well
-    const gap = width * 0.3;
-    const flightWidth = (width - gap) / 2;
+    const gap = W * 0.3;
+    const flightWidth = (W - gap) / 2;
 
     // Spiral
-    const diameter = Math.min(length, width);
+    const diameter = Math.min(L, W);
     const radius = diameter / 2;
 
     const angle = Math.atan(actualRise / tread) * (180 / Math.PI);
@@ -93,7 +82,7 @@ export default function Staircase() {
         label="Total Length"
         unit="ft"
         value={L}
-        onChange={(v) => handleDecimal(v, setL)}
+        onChange={setL}
         hint="Available horizontal space"
       />
 
@@ -101,7 +90,7 @@ export default function Staircase() {
         label="Total Width"
         unit="ft"
         value={W}
-        onChange={(v) => handleDecimal(v, setW)}
+        onChange={setW}
         hint="Staircase width"
       />
 
@@ -109,7 +98,7 @@ export default function Staircase() {
         label="Floor Height"
         unit="ft"
         value={H}
-        onChange={(v) => handleDecimal(v, setH)}
+        onChange={setH}
         hint="Floor to floor height"
       />
 
@@ -130,7 +119,7 @@ export default function Staircase() {
           <p>Total Run: {calc.totalRunStraight.toFixed(2)} ft</p>
           <p>Angle: {calc.angle.toFixed(1)}°</p>
 
-          {calc.totalRunStraight > parseFloat(L) && (
+          {calc.totalRunStraight > L && (
             <p style={{ color: "red" }}>
               ❌ Not fitting → Use Dog Leg Stair
             </p>
@@ -150,7 +139,7 @@ export default function Staircase() {
           <p>Run / Flight: {calc.runPerFlight.toFixed(2)} ft</p>
           <p>Total Length Used: {calc.totalDogLength.toFixed(2)} ft</p>
 
-          {calc.totalDogLength > parseFloat(L) && (
+          {calc.totalDogLength > L && (
             <p style={{ color: "red" }}>
               ❌ Not fitting → Adjust space or design
             </p>
