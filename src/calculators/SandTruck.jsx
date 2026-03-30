@@ -41,10 +41,10 @@ export default function SandTruck() {
         ]}
       />
 
-      <Input placeholder="Length" value={l} onChange={(e) => setL(e.target.value)} />
-      <Input placeholder="Width" value={w} onChange={(e) => setW(e.target.value)} />
-      <Input placeholder="Height" value={h} onChange={(e) => setH(e.target.value)} />
-      <Input placeholder="Heap % (10-20)" value={heap} onChange={(e) => setHeap(e.target.value)} />
+      <Input label="Length" unit={unit} value={l} onChange={setL} hint="Truck length" />
+      <Input label="Width" unit={unit} value={w} onChange={setW} hint="Truck width" />
+      <Input label="Height" unit={unit} value={h} onChange={setH} hint="Side height" />
+      <Input label="Heap %" value={heap} onChange={setHeap} hint="Extra sand (10–20%)" />
 
       <button className="primary" onClick={calc}>Calculate</button>
 
