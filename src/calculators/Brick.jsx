@@ -13,7 +13,7 @@ export default function Brick() {
   const [res, setRes] = useState(null);
 
   const calc = () => {
-    const lf = toFeet(l, unit);
+    const lf = toFeet(Number(l), unit);
     const hf = toFeet(h, unit);
     const tf = Number(t) / 12;
     const r = brickCalc(lf, hf, tf);
