@@ -22,7 +22,7 @@ export default function PCC() {
     if (mode === "exact") {
       const lf = toFeet(l, unit);
       const wf = toFeet(w, unit);
-      const tf = toFeet(t, unit);
+      const tf = Number(t) / 12;
       const r = pccExact(lf, wf, tf);
       setRes({
         volume: r.volume.toFixed(2),
@@ -71,7 +71,7 @@ export default function PCC() {
         <>
           <Input label="Length" unit={unit} value={l} onChange={setL} hint="Enter length" />
           <Input label="Width" unit={unit} value={w} onChange={setW} hint="Enter width" />
-          <Input label="Thickness" unit={unit} value={t} onChange={setT} hint="Slab thickness" />
+          <Input label="Thickness" unit="in" value={t} onChange={setT} hint="Slab thickness (inches)" />
         </>
       ) : (
         <Input label="Area" unit="sq.ft" value={area} onChange={setArea} hint="Total area" />
