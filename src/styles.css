@@ -18,21 +18,21 @@
 }
 * { box-sizing: border-box; }
 
-/* Tabs wrapper (scrollable if needed) */
+/* ================= TABS WRAPPER ================= */
 .tabs-container {
   width: 100%;
   overflow-x: auto;
   margin-bottom: 12px;
 }
 
-/* Tabs row */
+/* ================= TABS ================= */
 .tabs {
   display: flex;
   gap: 8px;
   margin-bottom: 12px;
 }
 
-/* Tab buttons */
+/* Tab button */
 .tab {
   flex: 1;
   padding: 10px;
@@ -50,14 +50,14 @@
   font-weight: 600;
 }
 
-/* Card layout */
+/* ================= CARD ================= */
 .card {
   background: #f9fafb;
   padding: 16px;
   border-radius: 16px;
 }
 
-/* Main container (dark theme) */
+/* ================= STAIRCASE (DARK) ================= */
 .staircase-container {
   max-width: 420px;
   margin: auto;
@@ -67,7 +67,7 @@
   color: white;
 }
 
-/* Inputs */
+/* ================= INPUTS ================= */
 .input-group {
   margin-bottom: 15px;
 }
@@ -80,29 +80,39 @@
   margin-top: 5px;
 }
 
-/* Helper text */
-small {
+/* ================= HINTS (FIXED) ================= */
+/* Global hint styling (for PCC + others) */
+.input-group small,
+.input-group div {
+  color: #666;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+/* Staircase-specific hint override (dark theme) */
+.staircase-container small {
   color: #aaa;
 }
 
-/* Error */
+/* ================= ERROR ================= */
 .error {
   color: red;
   margin-bottom: 10px;
 }
 
-/* Button */
+/* ================= BUTTON ================= */
 .calculate-btn {
   width: 100%;
   padding: 10px;
-  background: #00bcd4;
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
+  color: white;
 }
 
-/* Result box */
+/* ================= RESULT ================= */
 .result {
   margin-top: 20px;
   padding: 15px;
@@ -110,7 +120,7 @@ small {
   border-radius: 10px;
 }
 
-/* Global input fallback */
+/* ================= GLOBAL INPUT ================= */
 input {
   width: 100%;
 }
