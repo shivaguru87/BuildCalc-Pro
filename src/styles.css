@@ -170,6 +170,11 @@ small {
   opacity: 1 !important;
   font-size: 11px;
 }
+/* fallback global fix */
+div[style*="font-size: 11px"] {
+  color: #555 !important;
+  opacity: 1 !important;
+}
   
 body {
   margin: 0;
