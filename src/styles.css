@@ -164,6 +164,12 @@ small {
   background: #2c2c2c;
   border-radius: 10px;
 }
+/* Fix hint visibility globally */
+.input-group div {
+  color: #555 !important;
+  opacity: 1 !important;
+  font-size: 11px;
+}
   
 body {
   margin: 0;
