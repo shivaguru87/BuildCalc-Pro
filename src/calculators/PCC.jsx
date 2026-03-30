@@ -20,7 +20,7 @@ export default function PCC() {
 
   const calc = () => {
     if (mode === "exact") {
-      const lf = toFeet(l, unit);
+      const lf = toFeet(Number(l), unit);
       const wf = toFeet(w, unit);
       const tf = Number(t) / 12;
       const r = pccExact(lf, wf, tf);
