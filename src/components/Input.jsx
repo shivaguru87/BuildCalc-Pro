@@ -2,10 +2,14 @@ export default function Input({ label, unit, value, onChange, hint }) {
   const handleChange = (e) => {
     const val = e.target.value;
 
-    // allow numbers + decimal typing
+    // ✅ allow numbers + decimal typing
     if (/^\d*\.?\d*$/.test(val)) {
-      // keep original behavior (number output)
-      onChange(val === "" ? 0 : Number(val));
+      // send number ONLY if valid, else keep typing state
+      if (val === "" || val === ".") {
+        onChange("");
+      } else {
+        onChange(val);
+      }
     }
   };
 
@@ -29,7 +33,7 @@ export default function Input({ label, unit, value, onChange, hint }) {
       />
 
       {hint && (
-        <div style={{ fontSize: 11, color: "#666", opacity: 1 }}>
+        <div style={{ fontSize: 11, opacity: 0.7, color: "#555" }}>
           {hint}
         </div>
       )}
