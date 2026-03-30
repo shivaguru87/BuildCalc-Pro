@@ -41,9 +41,9 @@ export default function Volume() {
         ]}
       />
 
-      <Input placeholder="Length" value={l} onChange={(e) => setL(e.target.value)} />
-      <Input placeholder="Width" value={w} onChange={(e) => setW(e.target.value)} />
-      <Input placeholder="Height" value={h} onChange={(e) => setH(e.target.value)} />
+      <Input label="Length" unit={unit} value={l} onChange={setL} hint="Tank length" />
+      <Input label="Width" unit={unit} value={w} onChange={setW} hint="Tank width" />
+      <Input label="Height" unit={unit} value={h} onChange={setH} hint="Tank height" />
 
       <button className="primary" onClick={calc}>Calculate</button>
 
