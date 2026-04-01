@@ -1,107 +1,104 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import Card from "../components/Card";
+import Tabs from "../components/Tabs";
+import Input from "../components/Input";
 
-const TileCalculator = () => {
+export default function TileCalculator() {
   const [unit, setUnit] = useState("ft");
 
   const [length, setLength] = useState("");
   const [width, setWidth] = useState("");
 
   const [tileSize, setTileSize] = useState("2x2");
-  const [wastage, setWastage] = useState(10);
+
+  const [wastage, setWastage] = useState("10");
   const [tilesPerBox, setTilesPerBox] = useState("");
 
-  const [result, setResult] = useState(null);
+  // ===== UNIT CONVERSION =====
+  const toFeet = (val) => {
+    const v = Number(val || 0);
 
-  const convertToFeet = (value) => {
-    if (unit === "m") return value * 3.281;
-    if (unit === "inch") return value / 12;
-    return value;
+    if (unit === "m") return v * 3.281;
+    if (unit === "inch") return v / 12;
+    return v; // ft
   };
 
+  const L = toFeet(length);
+  const W = toFeet(width);
+
+  // ===== TILE AREA =====
   const getTileArea = () => {
-    switch (tileSize) {
-      case "1x1": return 1;
-      case "2x2": return 4;
-      case "2x1": return 2;
-      case "4x2": return 8;
-      default: return 4;
-    }
+    if (tileSize === "1x1") return 1;
+    if (tileSize === "2x2") return 4;
+    if (tileSize === "2x1") return 2;
+    if (tileSize === "4x2") return 8;
+    return 4;
   };
 
-  const calculate = () => {
-    let L = convertToFeet(Number(length));
-    let W = convertToFeet(Number(width));
+  // ===== CALCULATIONS =====
+  const area = L * W;
 
-    if (!L || !W) return;
+  let tiles = area / getTileArea();
+  tiles += tiles * (Number(wastage) / 100);
 
-    const area = L * W;
-    const tileArea = getTileArea();
+  const totalTiles = Math.ceil(tiles);
 
-    let tiles = area / tileArea;
-    tiles += tiles * (wastage / 100);
-
-    const totalTiles = Math.ceil(tiles);
-
-    let boxes = null;
-    if (tilesPerBox) {
-      boxes = Math.ceil(totalTiles / Number(tilesPerBox));
-    }
-
-    setResult({
-      area,
-      totalTiles,
-      boxes,
-    });
-  };
+  let boxes = null;
+  if (tilesPerBox) {
+    boxes = Math.ceil(totalTiles / Number(tilesPerBox));
+  }
 
   return (
-    <div className="card">
-      <h2>Tile Calculator</h2>
+    <Card>
+      <h3>Tile Calculator</h3>
 
-      {/* UNIT SELECTOR */}
-      <div className="toggle-group">
-        <button className={unit === "ft" ? "active" : ""} onClick={() => setUnit("ft")}>ft</button>
-        <button className={unit === "m" ? "active" : ""} onClick={() => setUnit("m")}>m</button>
-        <button className={unit === "inch" ? "active" : ""} onClick={() => setUnit("inch")}>inch</button>
-      </div>
+      {/* UNIT SELECT */}
+      <Tabs
+        value={unit}
+        onChange={setUnit}
+        options={[
+          { label: "ft", value: "ft" },
+          { label: "m", value: "m" },
+          { label: "inch", value: "inch" }
+        ]}
+      />
 
-      {/* INPUTS */}
-      <label>Length ({unit})</label>
-      <input value={length} onChange={(e) => setLength(e.target.value)} />
-
-      <label>Width ({unit})</label>
-      <input value={width} onChange={(e) => setWidth(e.target.value)} />
+      {/* DIMENSIONS */}
+      <Input label="Length" unit={unit} value={length} onChange={setLength} />
+      <Input label="Width" unit={unit} value={width} onChange={setWidth} />
 
       {/* TILE SIZE */}
-      <div className="toggle-group">
-        <button className={tileSize === "1x1" ? "active" : ""} onClick={() => setTileSize("1x1")}>1x1</button>
-        <button className={tileSize === "2x2" ? "active" : ""} onClick={() => setTileSize("2x2")}>2x2</button>
-        <button className={tileSize === "2x1" ? "active" : ""} onClick={() => setTileSize("2x1")}>2x1</button>
-        <button className={tileSize === "4x2" ? "active" : ""} onClick={() => setTileSize("4x2")}>4x2</button>
-      </div>
+      <Tabs
+        value={tileSize}
+        onChange={setTileSize}
+        options={[
+          { label: "1x1", value: "1x1" },
+          { label: "2x2", value: "2x2" },
+          { label: "2x1", value: "2x1" },
+          { label: "4x2", value: "4x2" }
+        ]}
+      />
 
-      <label>Wastage (%)</label>
-      <input value={wastage} onChange={(e) => setWastage(e.target.value)} />
+      {/* INPUTS */}
+      <Input
+        label="Wastage (%)"
+        value={wastage}
+        onChange={setWastage}
+      />
 
-      <label>Tiles per Box (optional)</label>
-      <input value={tilesPerBox} onChange={(e) => setTilesPerBox(e.target.value)} />
-
-      <button className="primary" onClick={calculate}>
-        Calculate
-      </button>
+      <Input
+        label="Tiles per Box"
+        value={tilesPerBox}
+        onChange={setTilesPerBox}
+        hint="Optional"
+      />
 
       {/* RESULT */}
-      {result && (
-        <div className="result-box">
-          <p>Total Area: {result.area.toFixed(1)} sqft</p>
-          <p>Total Tiles: {result.totalTiles}</p>
-          {result.boxes && <p>Boxes: {result.boxes}</p>}
-        </div>
-      )}
-
-      <button className="secondary">Back</button>
-    </div>
+      <div className="result">
+        <p>Total Area: {area.toFixed(2)} sqft</p>
+        <p>Total Tiles: {totalTiles}</p>
+        {boxes && <p>Boxes: {boxes}</p>}
+      </div>
+    </Card>
   );
-};
-
-export default TileCalculator;
+}
