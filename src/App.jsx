@@ -7,6 +7,7 @@ import Sand from "./calculators/SandTruck";
 import Brick from "./calculators/Brick";
 import AreaPro from "./calculators/AreaPro";
 import Staircase from "./calculators/Staircase";
+import UnitConverter from "./calculators/UnitConverter";
 import "./styles.css";
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
       {page === "brick" && <Brick />}
       {page === "areapro" && <AreaPro />}
       {page === "stair" && <Staircase />}
+      {page === "converter" && <UnitConverter />}
 
       {page !== "home" && (
         <button className="ghost" onClick={() => setPage("home")}>
