@@ -1,28 +1,21 @@
 import React, { useState } from "react";
 
 const TileCalculator = () => {
-  const [mode, setMode] = useState("sqft");
+  const [unit, setUnit] = useState("ft");
 
-  // Area input
-  const [area, setArea] = useState("");
+  const [length, setLength] = useState("");
+  const [width, setWidth] = useState("");
 
-  // Dimension input
-  const [lengthFt, setLengthFt] = useState("");
-  const [lengthIn, setLengthIn] = useState("");
-  const [widthFt, setWidthFt] = useState("");
-  const [widthIn, setWidthIn] = useState("");
-
-  // Tile
-  const [tileSize, setTileSize] = useState("2x2"); // feet
+  const [tileSize, setTileSize] = useState("2x2");
   const [wastage, setWastage] = useState(10);
   const [tilesPerBox, setTilesPerBox] = useState("");
 
   const [result, setResult] = useState(null);
 
-  const convertToSqft = () => {
-    const length = Number(lengthFt) + Number(lengthIn) / 12;
-    const width = Number(widthFt) + Number(widthIn) / 12;
-    return length * width;
+  const convertToFeet = (value) => {
+    if (unit === "m") return value * 3.281;
+    if (unit === "inch") return value / 12;
+    return value;
   };
 
   const getTileArea = () => {
@@ -36,16 +29,15 @@ const TileCalculator = () => {
   };
 
   const calculate = () => {
-    let totalArea =
-      mode === "sqft" ? Number(area) : convertToSqft();
+    let L = convertToFeet(Number(length));
+    let W = convertToFeet(Number(width));
 
-    if (!totalArea || totalArea <= 0) return;
+    if (!L || !W) return;
 
+    const area = L * W;
     const tileArea = getTileArea();
 
-    let tiles = totalArea / tileArea;
-
-    // Add wastage
+    let tiles = area / tileArea;
     tiles += tiles * (wastage / 100);
 
     const totalTiles = Math.ceil(tiles);
@@ -56,112 +48,60 @@ const TileCalculator = () => {
     }
 
     setResult({
-      totalArea,
+      area,
       totalTiles,
       boxes,
     });
   };
 
   return (
-    <div style={styles.container}>
+    <div className="card">
       <h2>Tile Calculator</h2>
 
-      {/* Mode */}
-      <div style={styles.row}>
-        <button onClick={() => setMode("sqft")}>Sqft</button>
-        <button onClick={() => setMode("dimension")}>Feet/Inch</button>
+      {/* UNIT SELECTOR */}
+      <div className="toggle-group">
+        <button className={unit === "ft" ? "active" : ""} onClick={() => setUnit("ft")}>ft</button>
+        <button className={unit === "m" ? "active" : ""} onClick={() => setUnit("m")}>m</button>
+        <button className={unit === "inch" ? "active" : ""} onClick={() => setUnit("inch")}>inch</button>
       </div>
 
-      {/* Inputs */}
-      {mode === "sqft" ? (
-        <input
-          placeholder="Area (sqft)"
-          value={area}
-          onChange={(e) => setArea(e.target.value)}
-        />
-      ) : (
-        <>
-          <div style={styles.row}>
-            <input
-              placeholder="Length ft"
-              value={lengthFt}
-              onChange={(e) => setLengthFt(e.target.value)}
-            />
-            <input
-              placeholder="in"
-              value={lengthIn}
-              onChange={(e) => setLengthIn(e.target.value)}
-            />
-          </div>
+      {/* INPUTS */}
+      <label>Length ({unit})</label>
+      <input value={length} onChange={(e) => setLength(e.target.value)} />
 
-          <div style={styles.row}>
-            <input
-              placeholder="Width ft"
-              value={widthFt}
-              onChange={(e) => setWidthFt(e.target.value)}
-            />
-            <input
-              placeholder="in"
-              value={widthIn}
-              onChange={(e) => setWidthIn(e.target.value)}
-            />
-          </div>
-        </>
-      )}
+      <label>Width ({unit})</label>
+      <input value={width} onChange={(e) => setWidth(e.target.value)} />
 
-      {/* Tile Size */}
-      <select value={tileSize} onChange={(e) => setTileSize(e.target.value)}>
-        <option value="1x1">1x1 ft</option>
-        <option value="2x2">2x2 ft</option>
-        <option value="2x1">2x1 ft</option>
-        <option value="4x2">4x2 ft</option>
-      </select>
+      {/* TILE SIZE */}
+      <div className="toggle-group">
+        <button className={tileSize === "1x1" ? "active" : ""} onClick={() => setTileSize("1x1")}>1x1</button>
+        <button className={tileSize === "2x2" ? "active" : ""} onClick={() => setTileSize("2x2")}>2x2</button>
+        <button className={tileSize === "2x1" ? "active" : ""} onClick={() => setTileSize("2x1")}>2x1</button>
+        <button className={tileSize === "4x2" ? "active" : ""} onClick={() => setTileSize("4x2")}>4x2</button>
+      </div>
 
-      {/* Wastage */}
-      <input
-        placeholder="Wastage % (default 10)"
-        value={wastage}
-        onChange={(e) => setWastage(e.target.value)}
-      />
+      <label>Wastage (%)</label>
+      <input value={wastage} onChange={(e) => setWastage(e.target.value)} />
 
-      {/* Box */}
-      <input
-        placeholder="Tiles per box (optional)"
-        value={tilesPerBox}
-        onChange={(e) => setTilesPerBox(e.target.value)}
-      />
+      <label>Tiles per Box (optional)</label>
+      <input value={tilesPerBox} onChange={(e) => setTilesPerBox(e.target.value)} />
 
-      <button style={styles.button} onClick={calculate}>
+      <button className="primary" onClick={calculate}>
         Calculate
       </button>
 
-      {/* Result */}
+      {/* RESULT */}
       {result && (
-        <div style={styles.result}>
-          <p>Total Area: {result.totalArea.toFixed(1)} sqft</p>
+        <div className="result-box">
+          <p>Total Area: {result.area.toFixed(1)} sqft</p>
           <p>Total Tiles: {result.totalTiles}</p>
           {result.boxes && <p>Boxes: {result.boxes}</p>}
         </div>
       )}
+
+      <button className="secondary">Back</button>
     </div>
   );
-};
-
-const styles = {
-  container: { padding: "20px" },
-  row: { display: "flex", gap: "10px", marginBottom: "10px" },
-  button: {
-    marginTop: "10px",
-    padding: "10px",
-    background: "black",
-    color: "white",
-    border: "none",
-  },
-  result: {
-    marginTop: "20px",
-    background: "#eee",
-    padding: "15px",
-  },
 };
 
 export default TileCalculator;
