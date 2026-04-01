@@ -11,6 +11,7 @@ import UnitConverter from "./calculators/UnitConverter";
 import Steel from "./calculators/Steel";
 import RCCEstimator from "./calculators/RCCEstimator";
 import TileCalculator from "./calculators/TileCalculator";
+import PaintCalculator from "./calculators/PaintCalculator";
 import "./styles.css";
 
 export default function App() {
@@ -32,6 +33,7 @@ export default function App() {
       {page === "steel" && <Steel />}
       {page === "rcc" && <RCCEstimator />}
       {page === "tile" && <TileCalculator />}
+      {page === "paint" && <PaintCalculator />}
 
       {page !== "home" && (
         <button className="ghost" onClick={() => setPage("home")}>
