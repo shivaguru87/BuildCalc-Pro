@@ -26,6 +26,9 @@ export default function Home({ setPage }) {
 		<button className="primary"  onClick={() => setPage("stair")}>
   	    Staircase
 		</button>
+		  <button className="primary" onClick={() => setPage("converter")}>
+		  Converter
+		</button>
 
       </div>
     </Card>
