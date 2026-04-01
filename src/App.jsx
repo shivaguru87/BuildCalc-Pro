@@ -9,6 +9,7 @@ import AreaPro from "./calculators/AreaPro";
 import Staircase from "./calculators/Staircase";
 import UnitConverter from "./calculators/UnitConverter";
 import Steel from "./calculators/Steel";
+import RCCEstimator from "./calculators/RCCEstimator";
 import "./styles.css";
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
       {page === "stair" && <Staircase />}
       {page === "converter" && <UnitConverter />}
       {page === "steel" && <Steel />}
+      {page === "rcc" && <RCCEstimator />}
 
       {page !== "home" && (
         <button className="ghost" onClick={() => setPage("home")}>
