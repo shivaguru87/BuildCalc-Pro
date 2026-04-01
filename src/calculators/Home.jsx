@@ -35,6 +35,9 @@ export default function Home({ setPage }) {
 		  <button className="primary" onClick={() => setPage("rcc")}>
 		  RCC Estimator
 		</button>
+		  <button className="primary" onClick={() => setPage("tile")}>
+			  Tile Calculator
+		  </button>
 
       </div>
     </Card>
