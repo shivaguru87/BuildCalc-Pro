@@ -38,6 +38,9 @@ export default function Home({ setPage }) {
 		  <button className="primary" onClick={() => setPage("tile")}>
 			  Tile Calculator
 		  </button>
+		  <button className="primary" onClick={() => setPage("paint")}>
+		  Paint Calculator
+		</button>
 
       </div>
     </Card>
