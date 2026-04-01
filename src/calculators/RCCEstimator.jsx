@@ -1,64 +1,73 @@
 import React, { useState } from "react";
 
 const RCCEstimator = () => {
+  const [mode, setMode] = useState("sqft");
+
+  // Sqft input
   const [area, setArea] = useState("");
+
+  // Dimension input
+  const [lengthFt, setLengthFt] = useState("");
+  const [lengthIn, setLengthIn] = useState("");
+  const [widthFt, setWidthFt] = useState("");
+  const [widthIn, setWidthIn] = useState("");
+
   const [floors, setFloors] = useState(1);
   const [basement, setBasement] = useState(0);
   const [grade, setGrade] = useState("M20");
+  const [thickness, setThickness] = useState(5); // inches
+  const [columnSpacing, setColumnSpacing] = useState(10); // ft
+
   const [result, setResult] = useState(null);
 
+  const convertToSqft = () => {
+    const length = Number(lengthFt) + Number(lengthIn) / 12;
+    const width = Number(widthFt) + Number(widthIn) / 12;
+    return length * width;
+  };
+
   const calculate = () => {
-    if (!area || area <= 0) return;
+    let baseArea =
+      mode === "sqft" ? Number(area) : convertToSqft();
+
+    if (!baseArea || baseArea <= 0) return;
 
     const totalFloors = Number(floors) + Number(basement);
-    const totalArea = Number(area) * totalFloors;
+    const totalArea = baseArea * totalFloors;
 
-    // Distribution (%)
-    const slab = totalArea * 0.5;
-    const beam = totalArea * 0.2;
-    const column = totalArea * 0.2;
-    const footing = totalArea * 0.1;
+    // Column count (approx grid)
+    const colsX = Math.ceil(Math.sqrt(baseArea) / columnSpacing);
+    const totalColumns = colsX * colsX;
 
-    // Steel factors (kg/sqft)
-    const steelFactor = {
-      slab: 3,
-      beam: 5,
-      column: 6,
-      footing: 4,
-    };
+    // Steel factor adjusted by thickness
+    let steelFactor = 4;
+    if (thickness >= 6) steelFactor = 4.5;
+    if (thickness >= 8) steelFactor = 5;
 
-    const steel =
-      slab * steelFactor.slab +
-      beam * steelFactor.beam +
-      column * steelFactor.column +
-      footing * steelFactor.footing;
+    const steel = totalArea * steelFactor;
 
-    // Concrete factor (based on grade)
+    // Concrete factors
     const cementFactor = grade === "M25" ? 0.45 : 0.4;
-
     const cement = totalArea * cementFactor;
     const sand = totalArea * 1.2;
     const aggregate = totalArea * 2.4;
 
-    // Bar suggestion logic
+    // Bar logic
     let bar = "10mm";
     if (floors >= 3) bar = "12mm";
     if (floors >= 5) bar = "16mm";
 
-    // Cost (approx)
-    const steelCost = steel * 75;
-    const cementCost = cement * 420;
-    const sandCost = sand * 50;
-    const aggCost = aggregate * 45;
-
-    const totalCost = steelCost + cementCost + sandCost + aggCost;
+    // Cost
+    const totalCost =
+      steel * 75 +
+      cement * 420 +
+      sand * 50 +
+      aggregate * 45;
 
     setResult({
+      baseArea,
       totalArea,
-      slab,
-      beam,
-      column,
-      footing,
+      totalColumns,
       steel,
       cement,
       sand,
@@ -70,57 +79,103 @@ const RCCEstimator = () => {
 
   return (
     <div style={styles.container}>
-      <h2>RCC PRO Estimator</h2>
+      <h2>RCC ULTRA PRO</h2>
 
-      <div style={styles.inputGroup}>
-        <label>Area (sqft)</label>
-        <input
-          type="number"
-          value={area}
-          onChange={(e) => setArea(e.target.value)}
-          placeholder="Enter total area"
-        />
+      {/* Mode Toggle */}
+      <div style={styles.row}>
+        <button onClick={() => setMode("sqft")}>Sqft</button>
+        <button onClick={() => setMode("dimension")}>Feet/Inch</button>
+      </div>
+
+      {/* INPUTS */}
+      {mode === "sqft" ? (
+        <div style={styles.inputGroup}>
+          <label>Area (sqft)</label>
+          <input
+            type="number"
+            value={area}
+            onChange={(e) => setArea(e.target.value)}
+          />
+        </div>
+      ) : (
+        <div>
+          <div style={styles.row}>
+            <input
+              placeholder="Length ft"
+              value={lengthFt}
+              onChange={(e) => setLengthFt(e.target.value)}
+            />
+            <input
+              placeholder="in"
+              value={lengthIn}
+              onChange={(e) => setLengthIn(e.target.value)}
+            />
+          </div>
+
+          <div style={styles.row}>
+            <input
+              placeholder="Width ft"
+              value={widthFt}
+              onChange={(e) => setWidthFt(e.target.value)}
+            />
+            <input
+              placeholder="in"
+              value={widthIn}
+              onChange={(e) => setWidthIn(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* BASIC */}
+      <div style={styles.row}>
+        <select value={floors} onChange={(e) => setFloors(e.target.value)}>
+          {[1,2,3,4,5].map((f) => (
+            <option key={f}>{f} Floors</option>
+          ))}
+        </select>
+
+        <select value={basement} onChange={(e) => setBasement(e.target.value)}>
+          {[0,1,2].map((b) => (
+            <option key={b}>{b} Basement</option>
+          ))}
+        </select>
       </div>
 
       <div style={styles.row}>
-        <div style={styles.inputGroup}>
-          <label>Floors</label>
-          <select value={floors} onChange={(e) => setFloors(e.target.value)}>
-            {[1,2,3,4,5].map((f) => (
-              <option key={f} value={f}>{f}</option>
-            ))}
-          </select>
-        </div>
+        <select value={grade} onChange={(e) => setGrade(e.target.value)}>
+          <option>M20</option>
+          <option>M25</option>
+        </select>
 
-        <div style={styles.inputGroup}>
-          <label>Basement</label>
-          <select value={basement} onChange={(e) => setBasement(e.target.value)}>
-            {[0,1,2].map((b) => (
-              <option key={b} value={b}>{b}</option>
-            ))}
-          </select>
-        </div>
+        <input
+          placeholder="Slab thickness (inch)"
+          value={thickness}
+          onChange={(e) => setThickness(e.target.value)}
+        />
       </div>
 
       <div style={styles.inputGroup}>
-        <label>Concrete Grade</label>
-        <select value={grade} onChange={(e) => setGrade(e.target.value)}>
-          <option value="M20">M20</option>
-          <option value="M25">M25</option>
-        </select>
+        <label>Column Spacing (ft)</label>
+        <input
+          value={columnSpacing}
+          onChange={(e) => setColumnSpacing(e.target.value)}
+        />
       </div>
 
       <button style={styles.button} onClick={calculate}>
         Calculate
       </button>
 
+      {/* RESULT */}
       {result && (
         <div style={styles.result}>
-          <h3>Breakup</h3>
-          <p>Slab: {result.slab.toFixed(0)} sqft</p>
-          <p>Beam: {result.beam.toFixed(0)} sqft</p>
-          <p>Column: {result.column.toFixed(0)} sqft</p>
-          <p>Footing: {result.footing.toFixed(0)} sqft</p>
+          <h3>Area</h3>
+          <p>Base: {result.baseArea.toFixed(1)} sqft</p>
+          <p>Total: {result.totalArea.toFixed(1)} sqft</p>
+
+          <h3>Structure</h3>
+          <p>Columns: {result.totalColumns}</p>
 
           <h3>Materials</h3>
           <p>Steel: {result.steel.toFixed(0)} kg</p>
@@ -128,10 +183,10 @@ const RCCEstimator = () => {
           <p>Sand: {result.sand.toFixed(1)} cft</p>
           <p>Aggregate: {result.aggregate.toFixed(1)} cft</p>
 
-          <h3>Suggestion</h3>
-          <p>Recommended Bar: {result.bar}</p>
+          <h3>Recommendation</h3>
+          <p>Bar: {result.bar}</p>
 
-          <h3>Estimated Cost</h3>
+          <h3>Total Cost</h3>
           <p>₹ {result.totalCost.toLocaleString()}</p>
         </div>
       )}
@@ -141,23 +196,18 @@ const RCCEstimator = () => {
 
 const styles = {
   container: { padding: "20px" },
-  inputGroup: {
-    marginBottom: "15px",
-    display: "flex",
-    flexDirection: "column",
-  },
-  row: { display: "flex", gap: "10px" },
+  inputGroup: { marginBottom: "10px" },
+  row: { display: "flex", gap: "10px", marginBottom: "10px" },
   button: {
     padding: "10px",
     background: "black",
     color: "white",
     border: "none",
-    cursor: "pointer",
   },
   result: {
     marginTop: "20px",
-    background: "#f2f2f2",
     padding: "15px",
+    background: "#eee",
   },
 };
 
