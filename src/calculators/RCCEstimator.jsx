@@ -1,214 +1,151 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import Card from "../components/Card";
+import Tabs from "../components/Tabs";
+import Input from "../components/Input";
 
-const RCCEstimator = () => {
+export default function RCCEstimator() {
   const [mode, setMode] = useState("sqft");
+  const [unit, setUnit] = useState("ft");
 
-  // Sqft input
   const [area, setArea] = useState("");
 
-  // Dimension input
-  const [lengthFt, setLengthFt] = useState("");
-  const [lengthIn, setLengthIn] = useState("");
-  const [widthFt, setWidthFt] = useState("");
-  const [widthIn, setWidthIn] = useState("");
+  const [length, setLength] = useState("");
+  const [width, setWidth] = useState("");
 
-  const [floors, setFloors] = useState(1);
-  const [basement, setBasement] = useState(0);
+  const [floors, setFloors] = useState("1");
+  const [basement, setBasement] = useState("0");
+
   const [grade, setGrade] = useState("M20");
-  const [thickness, setThickness] = useState(5); // inches
-  const [columnSpacing, setColumnSpacing] = useState(10); // ft
+  const [thickness, setThickness] = useState("5");
+  const [spacing, setSpacing] = useState("10");
 
-  const [result, setResult] = useState(null);
+  // ===== UNIT CONVERSION =====
+  const toFeet = (val) => {
+    const v = Number(val || 0);
 
-  const convertToSqft = () => {
-    const length = Number(lengthFt) + Number(lengthIn) / 12;
-    const width = Number(widthFt) + Number(widthIn) / 12;
-    return length * width;
+    if (unit === "m") return v * 3.281;
+    if (unit === "inch") return v / 12;
+    return v;
   };
 
-  const calculate = () => {
-    let baseArea =
-      mode === "sqft" ? Number(area) : convertToSqft();
+  const L = toFeet(length);
+  const W = toFeet(width);
 
-    if (!baseArea || baseArea <= 0) return;
+  const baseArea = mode === "sqft" ? Number(area) : L * W;
 
-    const totalFloors = Number(floors) + Number(basement);
-    const totalArea = baseArea * totalFloors;
+  const totalFloors = Number(floors) + Number(basement);
+  const totalArea = baseArea * totalFloors;
 
-    // Column count (approx grid)
-    const colsX = Math.ceil(Math.sqrt(baseArea) / columnSpacing);
-    const totalColumns = colsX * colsX;
+  // ===== COLUMN COUNT =====
+  const cols = Math.ceil(Math.sqrt(baseArea) / Number(spacing));
+  const totalColumns = cols * cols;
 
-    // Steel factor adjusted by thickness
-    let steelFactor = 4;
-    if (thickness >= 6) steelFactor = 4.5;
-    if (thickness >= 8) steelFactor = 5;
+  // ===== STEEL FACTOR =====
+  let steelFactor = 4;
+  if (thickness >= 6) steelFactor = 4.5;
+  if (thickness >= 8) steelFactor = 5;
 
-    const steel = totalArea * steelFactor;
+  const steel = totalArea * steelFactor;
 
-    // Concrete factors
-    const cementFactor = grade === "M25" ? 0.45 : 0.4;
-    const cement = totalArea * cementFactor;
-    const sand = totalArea * 1.2;
-    const aggregate = totalArea * 2.4;
+  // ===== MATERIALS =====
+  const cementFactor = grade === "M25" ? 0.45 : 0.4;
 
-    // Bar logic
-    let bar = "10mm";
-    if (floors >= 3) bar = "12mm";
-    if (floors >= 5) bar = "16mm";
+  const cement = totalArea * cementFactor;
+  const sand = totalArea * 1.2;
+  const aggregate = totalArea * 2.4;
 
-    // Cost
-    const totalCost =
-      steel * 75 +
-      cement * 420 +
-      sand * 50 +
-      aggregate * 45;
+  // ===== BAR LOGIC =====
+  let bar = "10mm";
+  if (totalFloors >= 3) bar = "12mm";
+  if (totalFloors >= 5) bar = "16mm";
 
-    setResult({
-      baseArea,
-      totalArea,
-      totalColumns,
-      steel,
-      cement,
-      sand,
-      aggregate,
-      bar,
-      totalCost,
-    });
-  };
+  const totalCost =
+    steel * 75 +
+    cement * 420 +
+    sand * 50 +
+    aggregate * 45;
 
   return (
-    <div style={styles.container}>
-      <h2>RCC ULTRA PRO</h2>
+    <Card>
+      <h3>RCC ULTRA PRO</h3>
 
-      {/* Mode Toggle */}
-      <div style={styles.row}>
-        <button onClick={() => setMode("sqft")}>Sqft</button>
-        <button onClick={() => setMode("dimension")}>Feet/Inch</button>
-      </div>
+      {/* MODE */}
+      <Tabs
+        value={mode}
+        onChange={setMode}
+        options={[
+          { label: "Sqft", value: "sqft" },
+          { label: "Dimension", value: "dimension" }
+        ]}
+      />
 
-      {/* INPUTS */}
+      {/* UNIT */}
+      <Tabs
+        value={unit}
+        onChange={setUnit}
+        options={[
+          { label: "ft", value: "ft" },
+          { label: "m", value: "m" },
+          { label: "inch", value: "inch" }
+        ]}
+      />
+
+      {/* INPUT */}
       {mode === "sqft" ? (
-        <div style={styles.inputGroup}>
-          <label>Area (sqft)</label>
-          <input
-            type="number"
-            value={area}
-            onChange={(e) => setArea(e.target.value)}
-          />
-        </div>
+        <Input label="Area" unit="sqft" value={area} onChange={setArea} />
       ) : (
-        <div>
-          <div style={styles.row}>
-            <input
-              placeholder="Length ft"
-              value={lengthFt}
-              onChange={(e) => setLengthFt(e.target.value)}
-            />
-            <input
-              placeholder="in"
-              value={lengthIn}
-              onChange={(e) => setLengthIn(e.target.value)}
-            />
-          </div>
-
-          <div style={styles.row}>
-            <input
-              placeholder="Width ft"
-              value={widthFt}
-              onChange={(e) => setWidthFt(e.target.value)}
-            />
-            <input
-              placeholder="in"
-              value={widthIn}
-              onChange={(e) => setWidthIn(e.target.value)}
-            />
-          </div>
-        </div>
+        <>
+          <Input label="Length" unit={unit} value={length} onChange={setLength} />
+          <Input label="Width" unit={unit} value={width} onChange={setWidth} />
+        </>
       )}
 
-      {/* BASIC */}
-      <div style={styles.row}>
-        <select value={floors} onChange={(e) => setFloors(e.target.value)}>
-          {[1,2,3,4,5].map((f) => (
-            <option key={f}>{f} Floors</option>
-          ))}
-        </select>
+      {/* BUILDING */}
+      <Input label="Floors" value={floors} onChange={setFloors} />
+      <Input label="Basement" value={basement} onChange={setBasement} />
 
-        <select value={basement} onChange={(e) => setBasement(e.target.value)}>
-          {[0,1,2].map((b) => (
-            <option key={b}>{b} Basement</option>
-          ))}
-        </select>
-      </div>
+      {/* SETTINGS */}
+      <Tabs
+        value={grade}
+        onChange={setGrade}
+        options={[
+          { label: "M20", value: "M20" },
+          { label: "M25", value: "M25" }
+        ]}
+      />
 
-      <div style={styles.row}>
-        <select value={grade} onChange={(e) => setGrade(e.target.value)}>
-          <option>M20</option>
-          <option>M25</option>
-        </select>
+      <Input
+        label="Slab Thickness"
+        unit="inch"
+        value={thickness}
+        onChange={setThickness}
+      />
 
-        <input
-          placeholder="Slab thickness (inch)"
-          value={thickness}
-          onChange={(e) => setThickness(e.target.value)}
-        />
-      </div>
-
-      <div style={styles.inputGroup}>
-        <label>Column Spacing (ft)</label>
-        <input
-          value={columnSpacing}
-          onChange={(e) => setColumnSpacing(e.target.value)}
-        />
-      </div>
-
-      <button style={styles.button} onClick={calculate}>
-        Calculate
-      </button>
+      <Input
+        label="Column Spacing"
+        unit="ft"
+        value={spacing}
+        onChange={setSpacing}
+      />
 
       {/* RESULT */}
-      {result && (
-        <div style={styles.result}>
-          <h3>Area</h3>
-          <p>Base: {result.baseArea.toFixed(1)} sqft</p>
-          <p>Total: {result.totalArea.toFixed(1)} sqft</p>
+      <div className="result">
+        <p>Base Area: {baseArea.toFixed(2)} sqft</p>
+        <p>Total Area: {totalArea.toFixed(2)} sqft</p>
+        <p>Columns: {totalColumns}</p>
+      </div>
 
-          <h3>Structure</h3>
-          <p>Columns: {result.totalColumns}</p>
+      <div className="result">
+        <p>Steel: {steel.toFixed(0)} kg</p>
+        <p>Cement: {cement.toFixed(1)} bags</p>
+        <p>Sand: {sand.toFixed(1)} cft</p>
+        <p>Aggregate: {aggregate.toFixed(1)} cft</p>
+      </div>
 
-          <h3>Materials</h3>
-          <p>Steel: {result.steel.toFixed(0)} kg</p>
-          <p>Cement: {result.cement.toFixed(1)} bags</p>
-          <p>Sand: {result.sand.toFixed(1)} cft</p>
-          <p>Aggregate: {result.aggregate.toFixed(1)} cft</p>
-
-          <h3>Recommendation</h3>
-          <p>Bar: {result.bar}</p>
-
-          <h3>Total Cost</h3>
-          <p>₹ {result.totalCost.toLocaleString()}</p>
-        </div>
-      )}
-    </div>
+      <div className="result">
+        <p>Suggested Bar: {bar}</p>
+        <p>Total Cost: ₹ {totalCost.toLocaleString()}</p>
+      </div>
+    </Card>
   );
-};
-
-const styles = {
-  container: { padding: "20px" },
-  inputGroup: { marginBottom: "10px" },
-  row: { display: "flex", gap: "10px", marginBottom: "10px" },
-  button: {
-    padding: "10px",
-    background: "black",
-    color: "white",
-    border: "none",
-  },
-  result: {
-    marginTop: "20px",
-    padding: "15px",
-    background: "#eee",
-  },
-};
-
-export default RCCEstimator;
+}
