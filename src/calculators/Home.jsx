@@ -32,6 +32,9 @@ export default function Home({ setPage }) {
 		  <button className="primary" onClick={() => setPage("steel")}>
 		  Steel
 		</button>
+		  <button className="primary" onClick={() => setPage("rcc")}>
+		  RCC Estimator
+		</button>
 
       </div>
     </Card>
