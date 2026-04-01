@@ -5,21 +5,22 @@ import Input from "../components/Input";
 
 export default function Steel() {
   const [mode, setMode] = useState("column");
+  const [unit, setUnit] = useState("ft");
 
-  // ===== BUILDING INPUT =====
   const [floors, setFloors] = useState("1");
   const [basement, setBasement] = useState("0");
 
-  // ===== DIMENSIONS (single input) =====
   const [length, setLength] = useState("");
   const [width, setWidth] = useState("");
   const [height, setHeight] = useState("");
 
-  const [unit, setUnit] = useState("ft");
+  // ===== UNIT CONVERSION =====
+  const toMeter = (val) => {
+    const v = Number(val || 0);
 
-  const toMeter = (v) => {
-    const val = Number(v);
-    return unit === "ft" ? val * 0.3048 : val;
+    if (unit === "ft") return v * 0.3048;
+    if (unit === "inch") return v * 0.0254;
+    return v; // meter
   };
 
   const L = toMeter(length);
@@ -44,19 +45,15 @@ export default function Steel() {
 
   const wt = (d) => (d * d) / 162;
 
-  // ===== COLUMN =====
-  const colLen = H + 0.6;
-  const colSteel = bars * colLen * wt(barDia);
+  // ===== CALCULATIONS =====
+  const colSteel = bars * (H + 0.6) * wt(barDia);
 
-  // ===== BEAM =====
   const beamSteel = 4 * L * wt(barDia);
 
-  // ===== SLAB =====
   const area = L * W * 10.764;
   const slabSteel = area * 4;
 
-  // ===== FOOTING =====
-  const footing = L * W * H * 85;
+  const footingSteel = L * W * H * 85;
 
   return (
     <Card>
@@ -80,7 +77,8 @@ export default function Steel() {
         onChange={setUnit}
         options={[
           { label: "ft", value: "ft" },
-          { label: "m", value: "m" }
+          { label: "m", value: "m" },
+          { label: "inch", value: "inch" }
         ]}
       />
 
@@ -93,13 +91,13 @@ export default function Steel() {
       <Input label="Width" unit={unit} value={width} onChange={setWidth} />
       <Input label="Height / Thickness" unit={unit} value={height} onChange={setHeight} />
 
-      {/* AUTO SUGGESTION */}
+      {/* SUGGESTION */}
       <div className="result">
         <p>Suggested Bar: {barDia} mm</p>
         <p>No of Bars: {bars}</p>
       </div>
 
-      {/* RESULT SWITCH */}
+      {/* RESULTS */}
       {mode === "column" && (
         <div className="result">
           <p>Column Steel: {colSteel.toFixed(2)} kg</p>
@@ -121,7 +119,7 @@ export default function Steel() {
 
       {mode === "footing" && (
         <div className="result">
-          <p>Steel: {footing.toFixed(2)} kg</p>
+          <p>Steel: {footingSteel.toFixed(2)} kg</p>
         </div>
       )}
     </Card>
