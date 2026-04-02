@@ -33,6 +33,11 @@
   margin-bottom: 12px;
   flex-wrap: nowrap;
 }
+.tabs {
+  display: flex;
+  flex-wrap: wrap;   /* 🔥 THIS FIXES OVERFLOW */
+  gap: 8px;
+}
 
 .tabs button {
   padding: 8px 12px;
