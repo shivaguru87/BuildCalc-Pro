@@ -25,18 +25,37 @@ export default function ConstructionCalculator() {
 
   const totalFloors = Number(floors) + Number(basement);
   const totalArea = Number(area) * totalFloors;
+
+  // ===== COST =====
   const totalCost = totalArea * rate;
+  const materialCost = totalCost * 0.65;
+  const labourCost = totalCost * 0.35;
+
+  // ===== MATERIALS =====
+  const steel = totalArea * 4;
+  const cement = totalArea * 0.4;
+  const sand = totalArea * 0.8;
+  const aggregate = totalArea * 0.75;
+
+  const tiles = totalArea * 1.1;
+  const paint = totalArea * 0.18;
+
+  const electricalPoints = totalArea / 30;
+  const plumbingPoints = totalArea / 60;
+
+  const wireLength = totalArea * 3;
+  const pipeLength = totalArea * 2;
+
+  const architectFee = totalCost * 0.04;
+  const interiorFee = totalCost * 0.06;
 
   // ================= INTERIOR =================
-  const [interiorType, setInteriorType] = useState("basic");
   const [interiorItem, setInteriorItem] = useState("kitchen");
-
   const [unit, setUnit] = useState("ft");
 
   const [length, setLength] = useState("");
   const [width, setWidth] = useState("");
   const [height, setHeight] = useState("");
-
   const [cost, setCost] = useState("1500");
 
   const toFeet = (v) => {
@@ -54,7 +73,6 @@ export default function ConstructionCalculator() {
   const volumeCalc = L * W * H;
 
   let finalCost = 0;
-
   if (["kitchen","wardrobe","bed","falseceiling","paneling"].includes(interiorItem)) {
     finalCost = areaCalc * Number(cost);
   } else {
@@ -110,13 +128,44 @@ export default function ConstructionCalculator() {
             <Input label="Rate" unit="₹/sqft" value={customRate} onChange={setCustomRate} />
           )}
 
-          <Input label="Area" unit="sqft" value={area} onChange={setArea} />
+          <Input label="Built-up Area" unit="sqft" value={area} onChange={setArea} />
           <Input label="Floors" value={floors} onChange={setFloors} />
           <Input label="Basement" value={basement} onChange={setBasement} />
 
+          {/* COST */}
           <div className="result">
-            <p>Rate: ₹ {rate}</p>
+            <p>Cost per sqft: ₹ {rate}</p>
             <p>Total Cost: ₹ {totalCost.toLocaleString()}</p>
+            <p>Material Cost: ₹ {materialCost.toLocaleString()}</p>
+            <p>Labour Cost: ₹ {labourCost.toLocaleString()}</p>
+          </div>
+
+          {/* MATERIAL */}
+          <div className="result">
+            <p>Steel: {steel.toFixed(0)} kg</p>
+            <p>Cement: {cement.toFixed(0)} bags</p>
+            <p>Sand: {sand.toFixed(0)} cft</p>
+            <p>Aggregate: {aggregate.toFixed(0)} cft</p>
+          </div>
+
+          {/* FINISHING */}
+          <div className="result">
+            <p>Tiles: {tiles.toFixed(0)} sqft</p>
+            <p>Paint: {paint.toFixed(1)} liters</p>
+          </div>
+
+          {/* SERVICES */}
+          <div className="result">
+            <p>Electrical Points: {electricalPoints.toFixed(0)}</p>
+            <p>Plumbing Points: {plumbingPoints.toFixed(0)}</p>
+            <p>Wire Length: {wireLength.toFixed(0)} m</p>
+            <p>Pipe Length: {pipeLength.toFixed(0)} m</p>
+          </div>
+
+          {/* FEES */}
+          <div className="result">
+            <p>Architect Fee: ₹ {architectFee.toLocaleString()}</p>
+            <p>Interior Fee: ₹ {interiorFee.toLocaleString()}</p>
           </div>
         </>
       )}
@@ -125,26 +174,12 @@ export default function ConstructionCalculator() {
       {mainTab === "interior" && (
         <>
           <Tabs
-            value={interiorType}
-            onChange={setInteriorType}
-            options={[
-              { label: "Basic", value: "basic" },
-              { label: "Standard", value: "standard" },
-              { label: "Premium", value: "premium" },
-              { label: "Custom", value: "custom" },
-            ]}
-          />
-
-          <Tabs
             value={interiorItem}
             onChange={setInteriorItem}
             options={[
               { label: "Kitchen", value: "kitchen" },
               { label: "Wardrobe", value: "wardrobe" },
               { label: "Bed", value: "bed" },
-              { label: "Dressing", value: "dressing" },
-              { label: "Paneling", value: "paneling" },
-              { label: "Computer", value: "computer" },
               { label: "Sofa", value: "sofa" },
               { label: "Dining", value: "dining" },
               { label: "False Ceiling", value: "falseceiling" },
@@ -163,12 +198,10 @@ export default function ConstructionCalculator() {
             ]}
           />
 
-          {/* TILE MODE */}
           {interiorItem === "tiles" ? (
             <>
               <Input label="Length" value={length} onChange={setLength} />
               <Input label="Width" value={width} onChange={setWidth} />
-
               <Input label="Tile Length (mm)" value={tileL} onChange={setTileL} />
               <Input label="Tile Width (mm)" value={tileW} onChange={setTileW} />
               <Input label="Tiles per Box" value={tilesPerBox} onChange={setTilesPerBox} />
