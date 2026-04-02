@@ -5,46 +5,67 @@ import Input from "../components/Input";
 
 export default function ConstructionCalculator() {
   const [mainTab, setMainTab] = useState("main");
+
+  // ================= MAIN =================
   const [type, setType] = useState("standard");
+  const [customRate, setCustomRate] = useState("3500");
 
   const [area, setArea] = useState("1480");
   const [floors, setFloors] = useState("1");
   const [basement, setBasement] = useState("0");
 
-  // ===== COST PER SQFT =====
   const costMap = {
     basic: 1800,
     standard: 2200,
     premium: 3000,
+    custom: Number(customRate),
   };
 
-  const costPerSqft = costMap[type];
+  const rate = costMap[type];
 
   const totalFloors = Number(floors) + Number(basement);
   const totalArea = Number(area) * totalFloors;
 
-  // ===== COST =====
-  const totalCost = totalArea * costPerSqft;
-  const materialCost = totalCost * 0.65;
-  const labourCost = totalCost * 0.35;
+  const totalCost = totalArea * rate;
 
-  // ===== MATERIALS =====
-  const steel = totalArea * 4;
-  const cement = totalArea * 0.4;
-  const sand = totalArea * 0.8;
-  const aggregate = totalArea * 0.75;
+  // ================= INTERIOR =================
+  const [interiorType, setInteriorType] = useState("basic");
+  const [unit, setUnit] = useState("ft");
 
-  const tiles = totalArea * 1.1;
-  const paint = totalArea * 0.18;
+  const [length, setLength] = useState("");
+  const [width, setWidth] = useState("");
+  const [height, setHeight] = useState("");
 
-  const electricalPoints = totalArea / 30;
-  const plumbingPoints = totalArea / 60;
+  const [cost, setCost] = useState("1500"); // per sqft
 
-  const wireLength = totalArea * 3;
-  const pipeLength = totalArea * 2;
+  const toFeet = (v) => {
+    const val = Number(v || 0);
+    if (unit === "inch") return val / 12;
+    if (unit === "mm") return val / 304.8;
+    return val;
+  };
 
-  const architectFee = totalCost * 0.04;
-  const interiorFee = totalCost * 0.06;
+  const L = toFeet(length);
+  const W = toFeet(width);
+  const H = toFeet(height);
+
+  const volume = L * W * H;
+  const areaCalc = L * W;
+
+  const interiorCost = areaCalc * Number(cost);
+
+  // ================= TILE =================
+  const [tileSize, setTileSize] = useState("600x600");
+  const [tilesPerBox, setTilesPerBox] = useState("4");
+
+  const tileArea = (600 * 600) / 929030; // mm² to sqft approx
+  const totalTiles = areaCalc / tileArea;
+  const boxes = totalTiles / Number(tilesPerBox);
+
+  // ================= PAINT =================
+  const [coats, setCoats] = useState("2");
+  const paintArea = 2 * (L + W) * H;
+  const paintLiters = (paintArea * Number(coats)) / 120;
 
   return (
     <Card>
@@ -56,6 +77,7 @@ export default function ConstructionCalculator() {
         onChange={setMainTab}
         options={[
           { label: "Main", value: "main" },
+          { label: "Interior", value: "interior" },
           { label: "Electrical", value: "electrical" },
           { label: "Plumbing", value: "plumbing" },
         ]}
@@ -64,7 +86,6 @@ export default function ConstructionCalculator() {
       {/* ================= MAIN ================= */}
       {mainTab === "main" && (
         <>
-          {/* TYPE */}
           <Tabs
             value={type}
             onChange={setType}
@@ -72,45 +93,79 @@ export default function ConstructionCalculator() {
               { label: "Basic", value: "basic" },
               { label: "Standard", value: "standard" },
               { label: "Premium", value: "premium" },
+              { label: "Custom", value: "custom" },
             ]}
           />
 
-          {/* INPUTS */}
-          <Input label="Built-up Area" unit="sqft" value={area} onChange={setArea} />
+          {type === "custom" && (
+            <Input
+              label="Custom Rate"
+              unit="₹/sqft"
+              value={customRate}
+              onChange={setCustomRate}
+            />
+          )}
+
+          <Input label="Area" unit="sqft" value={area} onChange={setArea} />
           <Input label="Floors" value={floors} onChange={setFloors} />
           <Input label="Basement" value={basement} onChange={setBasement} />
 
-          {/* COST */}
           <div className="result">
-            <p>Cost per sqft: ₹ {costPerSqft}</p>
+            <p>Rate: ₹ {rate}</p>
             <p>Total Cost: ₹ {totalCost.toLocaleString()}</p>
-            <p>Material Cost: ₹ {materialCost.toLocaleString()}</p>
-            <p>Labour Cost: ₹ {labourCost.toLocaleString()}</p>
+          </div>
+        </>
+      )}
+
+      {/* ================= INTERIOR ================= */}
+      {mainTab === "interior" && (
+        <>
+          {/* TYPE */}
+          <Tabs
+            value={interiorType}
+            onChange={setInteriorType}
+            options={[
+              { label: "Basic", value: "basic" },
+              { label: "Standard", value: "standard" },
+              { label: "Premium", value: "premium" },
+              { label: "Custom", value: "custom" },
+            ]}
+          />
+
+          {/* UNIT */}
+          <Tabs
+            value={unit}
+            onChange={setUnit}
+            options={[
+              { label: "ft", value: "ft" },
+              { label: "inch", value: "inch" },
+              { label: "mm", value: "mm" },
+            ]}
+          />
+
+          {/* DIMENSIONS */}
+          <Input label="Length" value={length} onChange={setLength} />
+          <Input label="Width" value={width} onChange={setWidth} />
+          <Input label="Height" value={height} onChange={setHeight} />
+
+          <Input label="Cost" unit="₹" value={cost} onChange={setCost} />
+
+          <div className="result">
+            <p>Area: {areaCalc.toFixed(2)} sqft</p>
+            <p>Interior Cost: ₹ {interiorCost.toLocaleString()}</p>
           </div>
 
-          {/* MATERIALS */}
+          {/* TILE */}
           <div className="result">
-            <p>Steel: {steel.toFixed(0)} kg</p>
-            <p>Cement: {cement.toFixed(0)} bags</p>
-            <p>Sand: {sand.toFixed(0)} cft</p>
-            <p>Aggregate: {aggregate.toFixed(0)} cft</p>
+            <p>Tiles Required: {totalTiles.toFixed(0)}</p>
+            <p>Boxes: {boxes.toFixed(0)}</p>
           </div>
 
-          <div className="result">
-            <p>Tiles: {tiles.toFixed(0)} sqft</p>
-            <p>Paint: {paint.toFixed(1)} liters</p>
-          </div>
+          {/* PAINT */}
+          <Input label="Coats" value={coats} onChange={setCoats} />
 
           <div className="result">
-            <p>Electrical Points: {electricalPoints.toFixed(0)}</p>
-            <p>Plumbing Points: {plumbingPoints.toFixed(0)}</p>
-            <p>Wire Length: {wireLength.toFixed(0)} m</p>
-            <p>Pipe Length: {pipeLength.toFixed(0)} m</p>
-          </div>
-
-          <div className="result">
-            <p>Architect Fee: ₹ {architectFee.toLocaleString()}</p>
-            <p>Interior Fee: ₹ {interiorFee.toLocaleString()}</p>
+            <p>Paint: {paintLiters.toFixed(1)} Liters</p>
           </div>
         </>
       )}
