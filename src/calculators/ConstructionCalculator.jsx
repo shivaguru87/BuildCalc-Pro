@@ -26,12 +26,10 @@ export default function ConstructionCalculator() {
   const totalFloors = Number(floors) + Number(basement);
   const totalArea = Number(area) * totalFloors;
 
-  // ===== COST =====
   const totalCost = totalArea * rate;
   const materialCost = totalCost * 0.65;
   const labourCost = totalCost * 0.35;
 
-  // ===== MATERIALS =====
   const steel = totalArea * 4;
   const cement = totalArea * 0.4;
   const sand = totalArea * 0.8;
@@ -58,6 +56,9 @@ export default function ConstructionCalculator() {
   const [height, setHeight] = useState("");
   const [cost, setCost] = useState("1500");
 
+  // FALSE CEILING (RUNNING FEET)
+  const [runningFeet, setRunningFeet] = useState("");
+
   const toFeet = (v) => {
     const val = Number(v || 0);
     if (unit === "inch") return val / 12;
@@ -73,7 +74,10 @@ export default function ConstructionCalculator() {
   const volumeCalc = L * W * H;
 
   let finalCost = 0;
-  if (["kitchen","wardrobe","bed","falseceiling","paneling"].includes(interiorItem)) {
+
+  if (interiorItem === "falseceiling") {
+    finalCost = Number(runningFeet) * Number(cost);
+  } else if (["kitchen","wardrobe","bed","paneling"].includes(interiorItem)) {
     finalCost = areaCalc * Number(cost);
   } else {
     finalCost = volumeCalc * Number(cost);
@@ -132,7 +136,6 @@ export default function ConstructionCalculator() {
           <Input label="Floors" value={floors} onChange={setFloors} />
           <Input label="Basement" value={basement} onChange={setBasement} />
 
-          {/* COST */}
           <div className="result">
             <p>Cost per sqft: ₹ {rate}</p>
             <p>Total Cost: ₹ {totalCost.toLocaleString()}</p>
@@ -140,7 +143,6 @@ export default function ConstructionCalculator() {
             <p>Labour Cost: ₹ {labourCost.toLocaleString()}</p>
           </div>
 
-          {/* MATERIAL */}
           <div className="result">
             <p>Steel: {steel.toFixed(0)} kg</p>
             <p>Cement: {cement.toFixed(0)} bags</p>
@@ -148,13 +150,11 @@ export default function ConstructionCalculator() {
             <p>Aggregate: {aggregate.toFixed(0)} cft</p>
           </div>
 
-          {/* FINISHING */}
           <div className="result">
             <p>Tiles: {tiles.toFixed(0)} sqft</p>
             <p>Paint: {paint.toFixed(1)} liters</p>
           </div>
 
-          {/* SERVICES */}
           <div className="result">
             <p>Electrical Points: {electricalPoints.toFixed(0)}</p>
             <p>Plumbing Points: {plumbingPoints.toFixed(0)}</p>
@@ -162,7 +162,6 @@ export default function ConstructionCalculator() {
             <p>Pipe Length: {pipeLength.toFixed(0)} m</p>
           </div>
 
-          {/* FEES */}
           <div className="result">
             <p>Architect Fee: ₹ {architectFee.toLocaleString()}</p>
             <p>Interior Fee: ₹ {interiorFee.toLocaleString()}</p>
@@ -198,7 +197,17 @@ export default function ConstructionCalculator() {
             ]}
           />
 
-          {interiorItem === "tiles" ? (
+          {/* FALSE CEILING SPECIAL */}
+          {interiorItem === "falseceiling" ? (
+            <>
+              <Input label="Running Feet" value={runningFeet} onChange={setRunningFeet} />
+              <Input label="Cost per ft" value={cost} onChange={setCost} />
+
+              <div className="result">
+                <p>Total Cost: ₹ {finalCost.toLocaleString()}</p>
+              </div>
+            </>
+          ) : interiorItem === "tiles" ? (
             <>
               <Input label="Length" value={length} onChange={setLength} />
               <Input label="Width" value={width} onChange={setWidth} />
