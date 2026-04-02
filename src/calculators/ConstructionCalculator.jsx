@@ -3,9 +3,6 @@ import Card from "../components/Card";
 import Tabs from "../components/Tabs";
 import Input from "../components/Input";
 
-export default function ConstructionCalculator() {
-  const [mainTab, setMainTab] = useState("main");
-
   // ================= MAIN =================
   const [type, setType] = useState("standard");
   const [customRate, setCustomRate] = useState("3500");
@@ -28,16 +25,48 @@ export default function ConstructionCalculator() {
 
   const totalCost = totalArea * rate;
 
+  const toFeet = (v) => {
+  const val = Number(v || 0);
+  if (unit === "inch") return val / 12;
+  if (unit === "mm") return val / 304.8;
+  return val;
+};
+
+const L = toFeet(length);
+const W = toFeet(width);
+const H = toFeet(height);
+
+const areaCalc = L * W;
+const volumeCalc = L * W * H;
+
+// Different logic per item
+let finalCost = 0;
+
+if (interiorItem === "kitchen") {
+  finalCost = areaCalc * Number(cost);
+} else if (interiorItem === "wardrobe") {
+  finalCost = areaCalc * Number(cost);
+} else if (interiorItem === "bed") {
+  finalCost = areaCalc * Number(cost);
+} else if (interiorItem === "falseceiling") {
+  finalCost = areaCalc * Number(cost);
+} else {
+  finalCost = volumeCalc * Number(cost);
+}
+
   // ================= INTERIOR =================
-  const [interiorType, setInteriorType] = useState("basic");
-  const [unit, setUnit] = useState("ft");
+  const [interiorItem, setInteriorItem] = useState("kitchen");
 
-  const [length, setLength] = useState("");
-  const [width, setWidth] = useState("");
-  const [height, setHeight] = useState("");
+const [unit, setUnit] = useState("ft");
 
-  const [cost, setCost] = useState("1500"); // per sqft
+const [length, setLength] = useState("");
+const [width, setWidth] = useState("");
+const [height, setHeight] = useState("");
 
+const [cost, setCost] = useState("1500");
+
+export default function ConstructionCalculator() {
+  const [mainTab, setMainTab] = useState("main");
   const toFeet = (v) => {
     const val = Number(v || 0);
     if (unit === "inch") return val / 12;
@@ -119,56 +148,65 @@ export default function ConstructionCalculator() {
 
       {/* ================= INTERIOR ================= */}
       {mainTab === "interior" && (
-        <>
-          {/* TYPE */}
-          <Tabs
-            value={interiorType}
-            onChange={setInteriorType}
-            options={[
-              { label: "Basic", value: "basic" },
-              { label: "Standard", value: "standard" },
-              { label: "Premium", value: "premium" },
-              { label: "Custom", value: "custom" },
-            ]}
-          />
+  <>
+    {/* TYPE */}
+    <Tabs
+      value={interiorType}
+      onChange={setInteriorType}
+      options={[
+        { label: "Basic", value: "basic" },
+        { label: "Standard", value: "standard" },
+        { label: "Premium", value: "premium" },
+        { label: "Custom", value: "custom" },
+      ]}
+    />
 
-          {/* UNIT */}
-          <Tabs
-            value={unit}
-            onChange={setUnit}
-            options={[
-              { label: "ft", value: "ft" },
-              { label: "inch", value: "inch" },
-              { label: "mm", value: "mm" },
-            ]}
-          />
+    {/* ITEM TABS */}
+    <Tabs
+      value={interiorItem}
+      onChange={setInteriorItem}
+      options={[
+        { label: "Kitchen", value: "kitchen" },
+        { label: "Wardrobe", value: "wardrobe" },
+        { label: "Bed", value: "bed" },
+        { label: "Dressing", value: "dressing" },
+        { label: "Paneling", value: "paneling" },
+        { label: "Computer", value: "computer" },
+        { label: "Sofa", value: "sofa" },
+        { label: "Dining", value: "dining" },
+        { label: "False Ceiling", value: "falseceiling" },
+        { label: "Tiles", value: "tiles" },
+        { label: "Paint", value: "paint" },
+        { label: "Custom", value: "customItem" },
+      ]}
+    />
 
-          {/* DIMENSIONS */}
-          <Input label="Length" value={length} onChange={setLength} />
-          <Input label="Width" value={width} onChange={setWidth} />
-          <Input label="Height" value={height} onChange={setHeight} />
+    {/* UNIT */}
+    <Tabs
+      value={unit}
+      onChange={setUnit}
+      options={[
+        { label: "ft", value: "ft" },
+        { label: "inch", value: "inch" },
+        { label: "mm", value: "mm" },
+      ]}
+    />
 
-          <Input label="Cost" unit="₹" value={cost} onChange={setCost} />
+    {/* INPUTS */}
+    <Input label="Length" value={length} onChange={setLength} />
+    <Input label="Width" value={width} onChange={setWidth} />
+    <Input label="Height" value={height} onChange={setHeight} />
 
-          <div className="result">
-            <p>Area: {areaCalc.toFixed(2)} sqft</p>
-            <p>Interior Cost: ₹ {interiorCost.toLocaleString()}</p>
-          </div>
+    <Input label="Cost" unit="₹" value={cost} onChange={setCost} />
 
-          {/* TILE */}
-          <div className="result">
-            <p>Tiles Required: {totalTiles.toFixed(0)}</p>
-            <p>Boxes: {boxes.toFixed(0)}</p>
-          </div>
-
-          {/* PAINT */}
-          <Input label="Coats" value={coats} onChange={setCoats} />
-
-          <div className="result">
-            <p>Paint: {paintLiters.toFixed(1)} Liters</p>
-          </div>
-        </>
-      )}
+    {/* RESULT */}
+    <div className="result">
+      <p>Area: {areaCalc.toFixed(2)} sqft</p>
+      <p>Volume: {volumeCalc.toFixed(2)} cft</p>
+      <p>Total Cost: ₹ {finalCost.toLocaleString()}</p>
+    </div>
+  </>
+)}
     </Card>
   );
 }
