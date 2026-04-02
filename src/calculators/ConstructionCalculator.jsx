@@ -75,13 +75,17 @@ export default function ConstructionCalculator() {
 
   let finalCost = 0;
 
-  if (interiorItem === "falseceiling") {
+if (interiorItem === "falseceiling") {
+  if (Number(runningFeet) > 0) {
     finalCost = Number(runningFeet) * Number(cost);
-  } else if (["kitchen","wardrobe","bed","paneling"].includes(interiorItem)) {
-    finalCost = areaCalc * Number(cost);
   } else {
-    finalCost = volumeCalc * Number(cost);
+    finalCost = areaCalc * Number(cost);
   }
+} else if (["kitchen","wardrobe","bed","paneling"].includes(interiorItem)) {
+  finalCost = areaCalc * Number(cost);
+} else {
+  finalCost = volumeCalc * Number(cost);
+}
 
   // ================= TILE =================
   const [tileL, setTileL] = useState("600");
@@ -200,11 +204,25 @@ export default function ConstructionCalculator() {
           {/* FALSE CEILING SPECIAL */}
           {interiorItem === "falseceiling" ? (
             <>
+              {/* DIMENSIONS */}
+              <Input label="Length" value={length} onChange={setLength} />
+              <Input label="Width" value={width} onChange={setWidth} />
+              <Input label="Height" value={height} onChange={setHeight} />
+          
+              {/* RUNNING FEET */}
               <Input label="Running Feet" value={runningFeet} onChange={setRunningFeet} />
-              <Input label="Cost per ft" value={cost} onChange={setCost} />
-
+          
+              <Input label="Cost" value={cost} onChange={setCost} />
+          
               <div className="result">
-                <p>Total Cost: ₹ {finalCost.toLocaleString()}</p>
+                {Number(runningFeet) > 0 ? (
+                  <p>Running Feet Cost: ₹ {(runningFeet * cost).toLocaleString()}</p>
+                ) : (
+                  <>
+                    <p>Area: {areaCalc.toFixed(2)} sqft</p>
+                    <p>Area Cost: ₹ {(areaCalc * cost).toLocaleString()}</p>
+                  </>
+                )}
               </div>
             </>
           ) : interiorItem === "tiles" ? (
