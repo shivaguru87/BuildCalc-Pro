@@ -102,6 +102,11 @@ if (interiorItem === "falseceiling") {
   const paintArea = 2 * (L + W) * H;
   const paintLiters = (paintArea * Number(coats)) / 120;
 
+  // ================= Electrical =================
+  const [electricalType, setElectricalType] = useState("light");
+const [points, setPoints] = useState("10");
+  
+
   return (
     <Card>
       <h3>Construction Calculator</h3>
@@ -264,6 +269,65 @@ if (interiorItem === "falseceiling") {
           )}
         </>
       )}
+      {/* ================= Electrical ================= */}
+      {mainTab === "electrical" && (
+  <>
+    {/* TYPE TABS */}
+    <Tabs
+      value={electricalType}
+      onChange={setElectricalType}
+      options={[
+        { label: "Light", value: "light" },
+        { label: "Fan", value: "fan" },
+        { label: "Socket", value: "socket" },
+        { label: "AC", value: "ac" },
+        { label: "MCB", value: "mcb" },
+      ]}
+    />
+
+    {/* INPUT */}
+    <Input label="Number of Points" value={points} onChange={setPoints} />
+
+    {/* ===== LOGIC ===== */}
+    {(() => {
+      let wire = "1.5 sqmm";
+      let amp = 6;
+      let mcb = "6A";
+
+      if (electricalType === "fan") {
+        wire = "1.5 sqmm";
+        amp = 6;
+        mcb = "6A";
+      }
+
+      if (electricalType === "socket") {
+        wire = "2.5 sqmm";
+        amp = 10;
+        mcb = "10A";
+      }
+
+      if (electricalType === "ac") {
+        wire = "4 sqmm";
+        amp = 20;
+        mcb = "20A";
+      }
+
+      // wire length logic
+      const wireLength = Number(points) * 8; // avg 8m per point
+
+      return (
+        <>
+          <div className="result">
+            <p>Wire Size: {wire}</p>
+            <p>Recommended Amp: {amp}A</p>
+            <p>MCB: {mcb}</p>
+            <p>Total Wire: {wireLength} meters</p>
+          </div>
+        </>
+      );
+    })()}
+  </>
+)}
     </Card>
   );
 }
