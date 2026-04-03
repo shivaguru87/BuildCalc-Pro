@@ -114,42 +114,62 @@ const [socket16, setSocket16] = useState("3");
 const [ac, setAc] = useState("2");
 const [geyser, setGeyser] = useState("1");
 const [wm, setWm] = useState("1");
+
+const [motorHP, setMotorHP] = useState("1");
+
+const [floorsElec, setFloorsElec] = useState("1");
+const [basementElec, setBasementElec] = useState("0");
   
-  // ===== LOAD (WATTS)
-const lightLoad = Number(light) * 10;
+  // ===== LOAD (REALISTIC)
+const lightLoad = Number(light) * 15;   // LED
 const fanLoad = Number(fan) * 75;
-const socketLoad = Number(socket6) * 100 + Number(socket16) * 1000;
+
+const socketLoad =
+  Number(socket6) * 100 +
+  Number(socket16) * 1000;
+
 const acLoad = Number(ac) * 1500;
 const geyserLoad = Number(geyser) * 2000;
 const wmLoad = Number(wm) * 800;
 
+// MOTOR
+const motorLoad = Number(motorHP) * 750;
+const motorEffective = motorLoad * 0.4;
+
+// TOTAL CONNECTED LOAD
 const totalLoadW =
-  lightLoad + fanLoad + socketLoad + acLoad + geyserLoad + wmLoad;
+  lightLoad +
+  fanLoad +
+  socketLoad +
+  acLoad +
+  geyserLoad +
+  wmLoad +
+  motorEffective;
 
-const totalKW = totalLoadW / 1000;
-  
-  // LIGHT CIRCUIT
+// DIVERSITY
+const diversityFactor = 0.6;
+const effectiveKW = (totalLoadW * diversityFactor) / 1000;
+const connectedKW = totalLoadW / 1000;
+
+// ===== MCB LOGIC
 const lightMCB = Math.ceil(light / 10);
-
-// SOCKET
-const socketMCB = Math.ceil((socket6 + socket16) / 5);
-
-// AC
+const socketMCB = Math.ceil((Number(socket6) + Number(socket16)) / 5);
 const acMCB = Number(ac);
-
-// GEYSER
 const geyserMCB = Number(geyser);
 
-// TOTAL MCB COUNT
-const totalMCB = lightMCB + socketMCB + acMCB + geyserMCB;
+const totalMCB =
+  lightMCB + socketMCB + acMCB + geyserMCB;
 
-  let mainMCB = "40A";
-if (totalKW > 5) mainMCB = "63A";
-if (totalKW > 8) mainMCB = "3 Phase Required";
+// ===== MAIN MCB
+let mainMCB = "40A";
+if (effectiveKW > 5) mainMCB = "63A";
+if (effectiveKW > 8) mainMCB = "3 Phase Recommended";
 
+// ===== RCCB
 const rccb = "63A / 30mA";
 
-  const wireLight = "1.5 sqmm";
+// ===== WIRES
+const wireLight = "1.5 sqmm";
 const wireSocket = "2.5 sqmm";
 const wireHeavy = "4 sqmm";
 const mainWire = "6 sqmm";
@@ -318,7 +338,7 @@ const mainWire = "6 sqmm";
         </>
       )}
       {/* ================= Electrical ================= */}
-      {mainTab === "electrical" && (
+     {mainTab === "electrical" && (
   <>
     {/* PHASE */}
     <Tabs
@@ -329,6 +349,10 @@ const mainWire = "6 sqmm";
         { label: "3 Phase", value: "three" },
       ]}
     />
+
+    {/* BUILDING */}
+    <Input label="Floors" value={floorsElec} onChange={setFloorsElec} />
+    <Input label="Basement" value={basementElec} onChange={setBasementElec} />
 
     {/* INPUTS */}
     <Input label="Light Points" value={light} onChange={setLight} />
@@ -341,32 +365,44 @@ const mainWire = "6 sqmm";
     <Input label="Geyser" value={geyser} onChange={setGeyser} />
     <Input label="Washing Machine" value={wm} onChange={setWm} />
 
-    {/* RESULT */}
-    <div className="result">
-      <p>Total Load: {totalKW.toFixed(2)} kW</p>
+    <Input label="Motor (HP)" value={motorHP} onChange={setMotorHP} />
 
+    {/* LOAD */}
+    <div className="result">
+      <p>Connected Load: {connectedKW.toFixed(2)} kW</p>
+      <p>Effective Load: {effectiveKW.toFixed(2)} kW</p>
+    </div>
+
+    {/* MCB */}
+    <div className="result">
       <p>Light MCB: {lightMCB} × 6A</p>
       <p>Socket MCB: {socketMCB} × 10A</p>
       <p>AC MCB: {acMCB} × 20A</p>
       <p>Geyser MCB: {geyserMCB} × 20A</p>
 
       <p>Total MCB: {totalMCB}</p>
+    </div>
 
+    {/* MAIN */}
+    <div className="result">
       <p>Main MCB: {mainMCB}</p>
       <p>RCCB: {rccb}</p>
     </div>
 
+    {/* WIRES */}
     <div className="result">
-      <p>Wire (Light): {wireLight}</p>
-      <p>Wire (Socket): {wireSocket}</p>
-      <p>Wire (Heavy): {wireHeavy}</p>
+      <p>Light Wire: {wireLight}</p>
+      <p>Socket Wire: {wireSocket}</p>
+      <p>Heavy Wire: {wireHeavy}</p>
       <p>Main Wire: {mainWire}</p>
     </div>
 
+    {/* GUIDANCE */}
     <div className="result">
-      <p>⚠️ Per floor max: 40–63A (Single Phase)</p>
-      <p>⚡ Use 3 Phase if load &gt; 8kW</p>
-      <p>✔ Separate AC line recommended</p>
+      <p>⚠️ Load uses diversity factor (60%)</p>
+      <p>✔ Single phase safe till ~7kW</p>
+      <p>⚡ Use 3-phase if &gt; 8kW</p>
+      <p>✔ Separate AC & geyser lines recommended</p>
     </div>
   </>
 )}
