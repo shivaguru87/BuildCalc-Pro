@@ -105,6 +105,9 @@ if (interiorItem === "falseceiling") {
   // ================= Electrical =================
   const [phase, setPhase] = useState("single");
 
+const [floorsElec, setFloorsElec] = useState("1");
+const [basementElec, setBasementElec] = useState("0");
+
 const [light, setLight] = useState("10");
 const [fan, setFan] = useState("4");
 
@@ -116,12 +119,9 @@ const [geyser, setGeyser] = useState("1");
 const [wm, setWm] = useState("1");
 
 const [motorHP, setMotorHP] = useState("1");
-
-const [floorsElec, setFloorsElec] = useState("1");
-const [basementElec, setBasementElec] = useState("0");
   
   // ===== LOAD (REALISTIC)
-const lightLoad = Number(light) * 15;   // LED
+const lightLoad = Number(light) * 15;
 const fanLoad = Number(fan) * 75;
 
 const socketLoad =
@@ -146,14 +146,26 @@ const totalLoadW =
   wmLoad +
   motorEffective;
 
+const connectedKW = totalLoadW / 1000;
+
 // DIVERSITY
 const diversityFactor = 0.6;
 const effectiveKW = (totalLoadW * diversityFactor) / 1000;
-const connectedKW = totalLoadW / 1000;
+
+// ===== FLOOR LOGIC
+const totalFloors =
+  Number(floorsElec) + Number(basementElec);
+
+const buildingFactor = totalFloors > 1 ? 0.8 : 1;
+
+const buildingLoad =
+  effectiveKW * totalFloors * buildingFactor;
 
 // ===== MCB LOGIC
-const lightMCB = Math.ceil(light / 10);
-const socketMCB = Math.ceil((Number(socket6) + Number(socket16)) / 5);
+const lightMCB = Math.ceil(Number(light) / 10);
+const socketMCB = Math.ceil(
+  (Number(socket6) + Number(socket16)) / 5
+);
 const acMCB = Number(ac);
 const geyserMCB = Number(geyser);
 
@@ -162,41 +174,33 @@ const totalMCB =
 
 // ===== MAIN MCB
 let mainMCB = "40A";
-if (effectiveKW > 5) mainMCB = "63A";
-if (effectiveKW > 8) mainMCB = "3 Phase Recommended";
+if (buildingLoad > 5) mainMCB = "63A";
+if (buildingLoad > 8) mainMCB = "3 Phase Recommended";
 
 // ===== RCCB
 const rccb = "63A / 30mA";
-  
-// ===== WIRE LENGTH CALCULATION
-
-const totalPoints =
-  Number(light) +
-  Number(fan) +
-  Number(socket6) +
-  Number(socket16);
-
-// Thumb rule: 8m per point
-const wirePerPoint = 8;
-
-// Phase wire
-const phaseWire = totalPoints * wirePerPoint;
-
-// Neutral wire (same as phase)
-const neutralWire = phaseWire;
-
-// Earth wire (70% of phase)
-const earthWire = phaseWire * 0.7;
-
-// Total wire
-const totalWire =
-  phaseWire + neutralWire + earthWire;
 
 // ===== WIRES
 const wireLight = "1.5 sqmm";
 const wireSocket = "2.5 sqmm";
 const wireHeavy = "4 sqmm";
 const mainWire = "6 sqmm";
+
+// ===== WIRE LENGTH
+const totalPoints =
+  Number(light) +
+  Number(fan) +
+  Number(socket6) +
+  Number(socket16);
+
+const wirePerPoint = 8;
+
+const phaseWire = totalPoints * wirePerPoint;
+const neutralWire = phaseWire;
+const earthWire = phaseWire * 0.7;
+
+const totalWire =
+  phaseWire + neutralWire + earthWire;
   
 
   return (
@@ -395,6 +399,7 @@ const mainWire = "6 sqmm";
     <div className="result">
       <p>Connected Load: {connectedKW.toFixed(2)} kW</p>
       <p>Effective Load: {effectiveKW.toFixed(2)} kW</p>
+      <p>Building Load: {buildingLoad.toFixed(2)} kW</p>
     </div>
 
     {/* MCB */}
@@ -403,7 +408,6 @@ const mainWire = "6 sqmm";
       <p>Socket MCB: {socketMCB} × 10A</p>
       <p>AC MCB: {acMCB} × 20A</p>
       <p>Geyser MCB: {geyserMCB} × 20A</p>
-
       <p>Total MCB: {totalMCB}</p>
     </div>
 
@@ -420,26 +424,25 @@ const mainWire = "6 sqmm";
       <p>Heavy Wire: {wireHeavy}</p>
       <p>Main Wire: {mainWire}</p>
     </div>
+
+    {/* WIRE LENGTH */}
     <div className="result">
-  <p>Phase Wire: {phaseWire.toFixed(0)} m</p>
-  <p>Neutral Wire: {neutralWire.toFixed(0)} m</p>
-  <p>Earth Wire: {earthWire.toFixed(0)} m</p>
-  <p>Total Wire: {totalWire.toFixed(0)} m</p>
-</div>
+      <p>Phase Wire: {phaseWire.toFixed(0)} m</p>
+      <p>Neutral Wire: {neutralWire.toFixed(0)} m</p>
+      <p>Earth Wire: {earthWire.toFixed(0)} m</p>
+      <p>Total Wire: {totalWire.toFixed(0)} m</p>
+    </div>
 
     {/* GUIDANCE */}
     <div className="result">
-      <p>⚠️ Load uses diversity factor (60%)</p>
+      <p>📏 8–10 meters per point</p>
+      <p>⚡ Neutral = Phase</p>
+      <p>🟢 Earth ≈ 70% of phase</p>
+      <p>✔ Add 10% extra for wastage</p>
+      <p>⚠️ Load uses 60% diversity</p>
       <p>✔ Single phase safe till ~7kW</p>
       <p>⚡ Use 3-phase if &gt; 8kW</p>
-      <p>✔ Separate AC & geyser lines recommended</p>
     </div>
-    <div className="result">
-  <p>📏 Thumb Rule: 8–10 meters per point</p>
-  <p>⚡ Neutral = same as phase wire</p>
-  <p>🟢 Earth wire ≈ 70% of phase</p>
-  <p>✔ Add 10% extra for wastage</p>
-</div>
   </>
 )}
     </Card>
