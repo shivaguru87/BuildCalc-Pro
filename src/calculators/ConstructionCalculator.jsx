@@ -102,24 +102,30 @@ if (interiorItem === "falseceiling") {
   const paintArea = 2 * (L + W) * H;
   const paintLiters = (paintArea * Number(coats)) / 120;
 
-  // ================= Electrical =================
-  const totalFloorsElec =
-  Number(floorsElec) + Number(basementElec);
+   // ===== ELECTRICAL STATES
+const [phase, setPhase] = useState("single");
 
-const totalLight = Number(light) * totalFloorsElec;
-const totalFan = Number(fan) * totalFloorsElec;
+const [floorsElec, setFloorsElec] = useState("1");
+const [basementElec, setBasementElec] = useState("0");
 
-const totalSocket6 = Number(socket6) * totalFloorsElec;
-const totalSocket16 = Number(socket16) * totalFloorsElec;
+const [light, setLight] = useState("10");
+const [fan, setFan] = useState("4");
 
-const totalAC = Number(ac) * totalFloorsElec;
-const totalGeyser = Number(geyser) * totalFloorsElec;
-  
-  // ===== FLOOR COUNT
+const [socket6, setSocket6] = useState("5");
+const [socket16, setSocket16] = useState("3");
+
+const [ac, setAc] = useState("2");
+const [geyser, setGeyser] = useState("1");
+const [wm, setWm] = useState("1");
+
+const [motorHP, setMotorHP] = useState("1");
+  // ===== ELECTRICAL LOGIC (CLEAN)
+
+// FLOOR
 const totalFloorsElec =
   Number(floorsElec) + Number(basementElec);
 
-// ===== SCALE POINTS PER FLOOR
+// SCALE
 const totalLight = Number(light) * totalFloorsElec;
 const totalFan = Number(fan) * totalFloorsElec;
 
@@ -129,7 +135,7 @@ const totalSocket16 = Number(socket16) * totalFloorsElec;
 const totalAC = Number(ac) * totalFloorsElec;
 const totalGeyser = Number(geyser) * totalFloorsElec;
 
-// ===== LOAD (REALISTIC)
+// LOAD
 const lightLoad = totalLight * 15;
 const fanLoad = totalFan * 75;
 
@@ -140,13 +146,13 @@ const socketLoad =
 const acLoad = totalAC * 1500;
 const geyserLoad = totalGeyser * 2000;
 
-const wmLoad = Number(wm) * 800; // usually common
+const wmLoad = Number(wm) * 800;
 
 // MOTOR
 const motorLoad = Number(motorHP) * 750;
 const motorEffective = motorLoad * 0.4;
 
-// TOTAL CONNECTED LOAD
+// TOTAL LOAD
 const totalLoadW =
   lightLoad +
   fanLoad +
@@ -158,53 +164,45 @@ const totalLoadW =
 
 const connectedKW = totalLoadW / 1000;
 
-// ===== DIVERSITY
-const diversityFactor = 0.6;
-const effectiveKW = (totalLoadW * diversityFactor) / 1000;
+// DIVERSITY
+const effectiveKW = (totalLoadW * 0.6) / 1000;
 
-// ===== BUILDING FACTOR
+// BUILDING
 const buildingFactor = totalFloorsElec > 1 ? 0.8 : 1;
+const buildingLoad = effectiveKW * buildingFactor;
 
-const buildingLoad =
-  effectiveKW * buildingFactor;
-
-// ===== MCB LOGIC (SCALED)
+// MCB
 const lightMCB = Math.ceil(totalLight / 10);
-
 const socketMCB = Math.ceil(
   (totalSocket6 + totalSocket16) / 5
 );
-
 const acMCB = totalAC;
 const geyserMCB = totalGeyser;
 
 const totalMCB =
   lightMCB + socketMCB + acMCB + geyserMCB;
 
-// ===== MAIN MCB
+// MAIN
 let mainMCB = "40A";
 if (buildingLoad > 5) mainMCB = "63A";
 if (buildingLoad > 8) mainMCB = "3 Phase Recommended";
 
-// ===== RCCB
 const rccb = "63A / 30mA";
 
-// ===== WIRES (SIZE)
+// WIRES
 const wireLight = "1.5 sqmm";
 const wireSocket = "2.5 sqmm";
 const wireHeavy = "4 sqmm";
 const mainWire = "6 sqmm";
 
-// ===== WIRE LENGTH (SCALED)
+// LENGTH
 const totalPoints =
   totalLight +
   totalFan +
   totalSocket6 +
   totalSocket16;
 
-const wirePerPoint = 8;
-
-const phaseWire = totalPoints * wirePerPoint;
+const phaseWire = totalPoints * 8;
 const neutralWire = phaseWire;
 const earthWire = phaseWire * 0.7;
 
