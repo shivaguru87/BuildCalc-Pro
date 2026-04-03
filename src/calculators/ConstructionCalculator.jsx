@@ -103,34 +103,44 @@ if (interiorItem === "falseceiling") {
   const paintLiters = (paintArea * Number(coats)) / 120;
 
   // ================= Electrical =================
-  const [phase, setPhase] = useState("single");
+  const totalFloorsElec =
+  Number(floorsElec) + Number(basementElec);
 
-const [floorsElec, setFloorsElec] = useState("1");
-const [basementElec, setBasementElec] = useState("0");
+const totalLight = Number(light) * totalFloorsElec;
+const totalFan = Number(fan) * totalFloorsElec;
 
-const [light, setLight] = useState("10");
-const [fan, setFan] = useState("4");
+const totalSocket6 = Number(socket6) * totalFloorsElec;
+const totalSocket16 = Number(socket16) * totalFloorsElec;
 
-const [socket6, setSocket6] = useState("5");
-const [socket16, setSocket16] = useState("3");
-
-const [ac, setAc] = useState("2");
-const [geyser, setGeyser] = useState("1");
-const [wm, setWm] = useState("1");
-
-const [motorHP, setMotorHP] = useState("1");
+const totalAC = Number(ac) * totalFloorsElec;
+const totalGeyser = Number(geyser) * totalFloorsElec;
   
-  // ===== LOAD (REALISTIC)
-const lightLoad = Number(light) * 15;
-const fanLoad = Number(fan) * 75;
+  // ===== FLOOR COUNT
+const totalFloorsElec =
+  Number(floorsElec) + Number(basementElec);
+
+// ===== SCALE POINTS PER FLOOR
+const totalLight = Number(light) * totalFloorsElec;
+const totalFan = Number(fan) * totalFloorsElec;
+
+const totalSocket6 = Number(socket6) * totalFloorsElec;
+const totalSocket16 = Number(socket16) * totalFloorsElec;
+
+const totalAC = Number(ac) * totalFloorsElec;
+const totalGeyser = Number(geyser) * totalFloorsElec;
+
+// ===== LOAD (REALISTIC)
+const lightLoad = totalLight * 15;
+const fanLoad = totalFan * 75;
 
 const socketLoad =
-  Number(socket6) * 100 +
-  Number(socket16) * 1000;
+  totalSocket6 * 100 +
+  totalSocket16 * 1000;
 
-const acLoad = Number(ac) * 1500;
-const geyserLoad = Number(geyser) * 2000;
-const wmLoad = Number(wm) * 800;
+const acLoad = totalAC * 1500;
+const geyserLoad = totalGeyser * 2000;
+
+const wmLoad = Number(wm) * 800; // usually common
 
 // MOTOR
 const motorLoad = Number(motorHP) * 750;
@@ -148,26 +158,25 @@ const totalLoadW =
 
 const connectedKW = totalLoadW / 1000;
 
-// DIVERSITY
+// ===== DIVERSITY
 const diversityFactor = 0.6;
 const effectiveKW = (totalLoadW * diversityFactor) / 1000;
 
-// ===== FLOOR LOGIC (ELECTRICAL)
-const totalFloorsElec =
-  Number(floorsElec) + Number(basementElec);
-
+// ===== BUILDING FACTOR
 const buildingFactor = totalFloorsElec > 1 ? 0.8 : 1;
 
 const buildingLoad =
-  effectiveKW * totalFloorsElec * buildingFactor;
+  effectiveKW * buildingFactor;
 
-// ===== MCB LOGIC
-const lightMCB = Math.ceil(Number(light) / 10);
+// ===== MCB LOGIC (SCALED)
+const lightMCB = Math.ceil(totalLight / 10);
+
 const socketMCB = Math.ceil(
-  (Number(socket6) + Number(socket16)) / 5
+  (totalSocket6 + totalSocket16) / 5
 );
-const acMCB = Number(ac);
-const geyserMCB = Number(geyser);
+
+const acMCB = totalAC;
+const geyserMCB = totalGeyser;
 
 const totalMCB =
   lightMCB + socketMCB + acMCB + geyserMCB;
@@ -180,18 +189,18 @@ if (buildingLoad > 8) mainMCB = "3 Phase Recommended";
 // ===== RCCB
 const rccb = "63A / 30mA";
 
-// ===== WIRES
+// ===== WIRES (SIZE)
 const wireLight = "1.5 sqmm";
 const wireSocket = "2.5 sqmm";
 const wireHeavy = "4 sqmm";
 const mainWire = "6 sqmm";
 
-// ===== WIRE LENGTH
+// ===== WIRE LENGTH (SCALED)
 const totalPoints =
-  Number(light) +
-  Number(fan) +
-  Number(socket6) +
-  Number(socket16);
+  totalLight +
+  totalFan +
+  totalSocket6 +
+  totalSocket16;
 
 const wirePerPoint = 8;
 
@@ -368,7 +377,6 @@ const totalWire =
       {/* ================= Electrical ================= */}
      {mainTab === "electrical" && (
   <>
-    {/* PHASE */}
     <Tabs
       value={phase}
       onChange={setPhase}
@@ -378,11 +386,9 @@ const totalWire =
       ]}
     />
 
-    {/* BUILDING */}
     <Input label="Floors" value={floorsElec} onChange={setFloorsElec} />
     <Input label="Basement" value={basementElec} onChange={setBasementElec} />
 
-    {/* INPUTS */}
     <Input label="Light Points" value={light} onChange={setLight} />
     <Input label="Fan Points" value={fan} onChange={setFan} />
 
