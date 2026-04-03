@@ -208,6 +208,52 @@ const earthWire = phaseWire * 0.7;
 
 const totalWire =
   phaseWire + neutralWire + earthWire;
+
+  // ================= PLUMBING =================
+  const [floorsPlumb, setFloorsPlumb] = useState("1");
+const [basementPlumb, setBasementPlumb] = useState("0");
+
+const [basin, setBasin] = useState("2");
+const [toilet, setToilet] = useState("2");
+const [shower, setShower] = useState("2");
+const [sink, setSink] = useState("1");
+
+const [tank, setTank] = useState("1000"); // liters
+  // ===== FLOOR
+const totalFloorsPlumb =
+  Number(floorsPlumb) + Number(basementPlumb);
+
+// ===== SCALE FIXTURES
+const totalBasin = Number(basin) * totalFloorsPlumb;
+const totalToilet = Number(toilet) * totalFloorsPlumb;
+const totalShower = Number(shower) * totalFloorsPlumb;
+const totalSink = Number(sink) * totalFloorsPlumb;
+
+// ===== WATER DEMAND (liters/day)
+const waterDemand =
+  totalBasin * 25 +
+  totalToilet * 50 +
+  totalShower * 60 +
+  totalSink * 40;
+
+// ===== PIPE SIZE LOGIC
+let pipeSize = "1 inch";
+
+if (waterDemand > 500) pipeSize = "1.5 inch";
+if (waterDemand > 1000) pipeSize = "2 inch";
+
+// ===== PIPE LENGTH
+const totalPointsPlumb =
+  totalBasin + totalToilet + totalShower + totalSink;
+
+const pipeLengthPlumb = totalPointsPlumb * 6;
+
+// ===== TANK CHECK
+let tankSuggestion = "Sufficient";
+
+if (waterDemand > Number(tank)) {
+  tankSuggestion = "Increase tank capacity";
+}
   
 
   return (
@@ -446,6 +492,43 @@ const totalWire =
       <p>⚠️ Load uses 60% diversity</p>
       <p>✔ Single phase safe till ~7kW</p>
       <p>⚡ Use 3-phase if &gt; 8kW</p>
+    </div>
+  </>
+)}
+      {/* ================= Plumbing ================= */}
+      {mainTab === "plumbing" && (
+  <>
+    {/* BUILDING */}
+    <Input label="Floors" value={floorsPlumb} onChange={setFloorsPlumb} />
+    <Input label="Basement" value={basementPlumb} onChange={setBasementPlumb} />
+
+    {/* FIXTURES */}
+    <Input label="Wash Basin" value={basin} onChange={setBasin} />
+    <Input label="Toilet" value={toilet} onChange={setToilet} />
+    <Input label="Shower" value={shower} onChange={setShower} />
+    <Input label="Kitchen Sink" value={sink} onChange={setSink} />
+
+    <Input label="Tank Capacity (Liters)" value={tank} onChange={setTank} />
+
+    {/* RESULT */}
+    <div className="result">
+      <p>Water Demand: {waterDemand.toFixed(0)} L/day</p>
+      <p>Pipe Size: {pipeSize}</p>
+      <p>Pipe Length: {pipeLengthPlumb.toFixed(0)} m</p>
+    </div>
+
+    <div className="result">
+      <p>Total Fixtures: {totalPointsPlumb}</p>
+      <p>Tank: {tankSuggestion}</p>
+    </div>
+
+    {/* GUIDANCE */}
+    <div className="result">
+      <p>💧 Basin: 25L/day</p>
+      <p>🚿 Shower: 60L/day</p>
+      <p>🚽 Toilet: 50L/day</p>
+      <p>🍽 Sink: 40L/day</p>
+      <p>📏 6m pipe per point</p>
     </div>
   </>
 )}
