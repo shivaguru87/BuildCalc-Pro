@@ -167,6 +167,30 @@ if (effectiveKW > 8) mainMCB = "3 Phase Recommended";
 
 // ===== RCCB
 const rccb = "63A / 30mA";
+  
+// ===== WIRE LENGTH CALCULATION
+
+const totalPoints =
+  Number(light) +
+  Number(fan) +
+  Number(socket6) +
+  Number(socket16);
+
+// Thumb rule: 8m per point
+const wirePerPoint = 8;
+
+// Phase wire
+const phaseWire = totalPoints * wirePerPoint;
+
+// Neutral wire (same as phase)
+const neutralWire = phaseWire;
+
+// Earth wire (70% of phase)
+const earthWire = phaseWire * 0.7;
+
+// Total wire
+const totalWire =
+  phaseWire + neutralWire + earthWire;
 
 // ===== WIRES
 const wireLight = "1.5 sqmm";
@@ -396,6 +420,12 @@ const mainWire = "6 sqmm";
       <p>Heavy Wire: {wireHeavy}</p>
       <p>Main Wire: {mainWire}</p>
     </div>
+    <div className="result">
+  <p>Phase Wire: {phaseWire.toFixed(0)} m</p>
+  <p>Neutral Wire: {neutralWire.toFixed(0)} m</p>
+  <p>Earth Wire: {earthWire.toFixed(0)} m</p>
+  <p>Total Wire: {totalWire.toFixed(0)} m</p>
+</div>
 
     {/* GUIDANCE */}
     <div className="result">
@@ -404,6 +434,12 @@ const mainWire = "6 sqmm";
       <p>⚡ Use 3-phase if &gt; 8kW</p>
       <p>✔ Separate AC & geyser lines recommended</p>
     </div>
+    <div className="result">
+  <p>📏 Thumb Rule: 8–10 meters per point</p>
+  <p>⚡ Neutral = same as phase wire</p>
+  <p>🟢 Earth wire ≈ 70% of phase</p>
+  <p>✔ Add 10% extra for wastage</p>
+</div>
   </>
 )}
     </Card>
