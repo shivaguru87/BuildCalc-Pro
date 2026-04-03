@@ -152,14 +152,14 @@ const connectedKW = totalLoadW / 1000;
 const diversityFactor = 0.6;
 const effectiveKW = (totalLoadW * diversityFactor) / 1000;
 
-// ===== FLOOR LOGIC
-const totalFloors =
+// ===== FLOOR LOGIC (ELECTRICAL)
+const totalFloorsElec =
   Number(floorsElec) + Number(basementElec);
 
-const buildingFactor = totalFloors > 1 ? 0.8 : 1;
+const buildingFactor = totalFloorsElec > 1 ? 0.8 : 1;
 
 const buildingLoad =
-  effectiveKW * totalFloors * buildingFactor;
+  effectiveKW * totalFloorsElec * buildingFactor;
 
 // ===== MCB LOGIC
 const lightMCB = Math.ceil(Number(light) / 10);
