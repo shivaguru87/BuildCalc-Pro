@@ -103,8 +103,56 @@ if (interiorItem === "falseceiling") {
   const paintLiters = (paintArea * Number(coats)) / 120;
 
   // ================= Electrical =================
-  const [electricalType, setElectricalType] = useState("light");
-const [points, setPoints] = useState("10");
+  const [phase, setPhase] = useState("single");
+
+const [light, setLight] = useState("10");
+const [fan, setFan] = useState("4");
+
+const [socket6, setSocket6] = useState("5");
+const [socket16, setSocket16] = useState("3");
+
+const [ac, setAc] = useState("2");
+const [geyser, setGeyser] = useState("1");
+const [wm, setWm] = useState("1");
+  
+  // ===== LOAD (WATTS)
+const lightLoad = Number(light) * 10;
+const fanLoad = Number(fan) * 75;
+const socketLoad = Number(socket6) * 100 + Number(socket16) * 1000;
+const acLoad = Number(ac) * 1500;
+const geyserLoad = Number(geyser) * 2000;
+const wmLoad = Number(wm) * 800;
+
+const totalLoadW =
+  lightLoad + fanLoad + socketLoad + acLoad + geyserLoad + wmLoad;
+
+const totalKW = totalLoadW / 1000;
+  
+  // LIGHT CIRCUIT
+const lightMCB = Math.ceil(light / 10);
+
+// SOCKET
+const socketMCB = Math.ceil((socket6 + socket16) / 5);
+
+// AC
+const acMCB = Number(ac);
+
+// GEYSER
+const geyserMCB = Number(geyser);
+
+// TOTAL MCB COUNT
+const totalMCB = lightMCB + socketMCB + acMCB + geyserMCB;
+
+  let mainMCB = "40A";
+if (totalKW > 5) mainMCB = "63A";
+if (totalKW > 8) mainMCB = "3 Phase Required";
+
+const rccb = "63A / 30mA";
+
+  const wireLight = "1.5 sqmm";
+const wireSocket = "2.5 sqmm";
+const wireHeavy = "4 sqmm";
+const mainWire = "6 sqmm";
   
 
   return (
@@ -272,60 +320,54 @@ const [points, setPoints] = useState("10");
       {/* ================= Electrical ================= */}
       {mainTab === "electrical" && (
   <>
-    {/* TYPE TABS */}
+    {/* PHASE */}
     <Tabs
-      value={electricalType}
-      onChange={setElectricalType}
+      value={phase}
+      onChange={setPhase}
       options={[
-        { label: "Light", value: "light" },
-        { label: "Fan", value: "fan" },
-        { label: "Socket", value: "socket" },
-        { label: "AC", value: "ac" },
-        { label: "MCB", value: "mcb" },
+        { label: "Single Phase", value: "single" },
+        { label: "3 Phase", value: "three" },
       ]}
     />
 
-    {/* INPUT */}
-    <Input label="Number of Points" value={points} onChange={setPoints} />
+    {/* INPUTS */}
+    <Input label="Light Points" value={light} onChange={setLight} />
+    <Input label="Fan Points" value={fan} onChange={setFan} />
 
-    {/* ===== LOGIC ===== */}
-    {(() => {
-      let wire = "1.5 sqmm";
-      let amp = 6;
-      let mcb = "6A";
+    <Input label="6A Socket" value={socket6} onChange={setSocket6} />
+    <Input label="16A Socket" value={socket16} onChange={setSocket16} />
 
-      if (electricalType === "fan") {
-        wire = "1.5 sqmm";
-        amp = 6;
-        mcb = "6A";
-      }
+    <Input label="AC Units" value={ac} onChange={setAc} />
+    <Input label="Geyser" value={geyser} onChange={setGeyser} />
+    <Input label="Washing Machine" value={wm} onChange={setWm} />
 
-      if (electricalType === "socket") {
-        wire = "2.5 sqmm";
-        amp = 10;
-        mcb = "10A";
-      }
+    {/* RESULT */}
+    <div className="result">
+      <p>Total Load: {totalKW.toFixed(2)} kW</p>
 
-      if (electricalType === "ac") {
-        wire = "4 sqmm";
-        amp = 20;
-        mcb = "20A";
-      }
+      <p>Light MCB: {lightMCB} × 6A</p>
+      <p>Socket MCB: {socketMCB} × 10A</p>
+      <p>AC MCB: {acMCB} × 20A</p>
+      <p>Geyser MCB: {geyserMCB} × 20A</p>
 
-      // wire length logic
-      const wireLength = Number(points) * 8; // avg 8m per point
+      <p>Total MCB: {totalMCB}</p>
 
-      return (
-        <>
-          <div className="result">
-            <p>Wire Size: {wire}</p>
-            <p>Recommended Amp: {amp}A</p>
-            <p>MCB: {mcb}</p>
-            <p>Total Wire: {wireLength} meters</p>
-          </div>
-        </>
-      );
-    })()}
+      <p>Main MCB: {mainMCB}</p>
+      <p>RCCB: {rccb}</p>
+    </div>
+
+    <div className="result">
+      <p>Wire (Light): {wireLight}</p>
+      <p>Wire (Socket): {wireSocket}</p>
+      <p>Wire (Heavy): {wireHeavy}</p>
+      <p>Main Wire: {mainWire}</p>
+    </div>
+
+    <div className="result">
+      <p>⚠️ Per floor max: 40–63A (Single Phase)</p>
+      <p>⚡ Use 3 Phase if load &gt; 8kW</p>
+      <p>✔ Separate AC line recommended</p>
+    </div>
   </>
 )}
     </Card>
