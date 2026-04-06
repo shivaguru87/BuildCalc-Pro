@@ -13,6 +13,7 @@ export default function UnitConverter() {
   const [output, setOutput] = useState("");
 
   // ================= UNITS =================
+
   const lengthUnits = {
     mm: 0.001,
     cm: 0.01,
@@ -27,10 +28,24 @@ export default function UnitConverter() {
     m2: 1,
     ft2: 0.092903,
     acre: 4046.86,
-    ha: 10000
+    ha: 10000,
+    cent: 40.4686 // ✅ ADDED
   };
 
-  const units = type === "length" ? lengthUnits : areaUnits;
+  const volumeUnits = {
+    cft: 0.0283168,
+    m3: 1,
+    liters: 0.001,
+    brass: 2.83168
+  };
+
+  // SELECT UNITS
+  const units =
+    type === "length"
+      ? lengthUnits
+      : type === "area"
+      ? areaUnits
+      : volumeUnits;
 
   // ================= CONVERT =================
   const convert = (val, from, to) => {
@@ -54,7 +69,6 @@ export default function UnitConverter() {
 
   return (
     <Card>
-
       <h3>Unit Converter</h3>
 
       {/* TYPE */}
@@ -64,14 +78,29 @@ export default function UnitConverter() {
           setType(val);
           setInput("");
           setOutput("");
+
+          // reset defaults
+          if (val === "length") {
+            setFromUnit("mm");
+            setToUnit("m");
+          }
+          if (val === "area") {
+            setFromUnit("cent");
+            setToUnit("ft2");
+          }
+          if (val === "volume") {
+            setFromUnit("cft");
+            setToUnit("liters");
+          }
         }}
         options={[
           { label: "Length", value: "length" },
-          { label: "Area", value: "area" }
+          { label: "Area", value: "area" },
+          { label: "Volume", value: "volume" }
         ]}
       />
 
-      {/* FROM */}
+      {/* INPUT */}
       <Input
         label="From"
         value={input}
@@ -82,7 +111,10 @@ export default function UnitConverter() {
       <Tabs
         value={fromUnit}
         onChange={setFromUnit}
-        options={Object.keys(units).map(u => ({ label: u, value: u }))}
+        options={Object.keys(units).map(u => ({
+          label: u,
+          value: u
+        }))}
       />
 
       {/* SWAP */}
@@ -90,7 +122,7 @@ export default function UnitConverter() {
         ⇅ Swap
       </button>
 
-      {/* TO */}
+      {/* OUTPUT */}
       <Input
         label="To"
         value={output}
@@ -101,7 +133,10 @@ export default function UnitConverter() {
       <Tabs
         value={toUnit}
         onChange={setToUnit}
-        options={Object.keys(units).map(u => ({ label: u, value: u }))}
+        options={Object.keys(units).map(u => ({
+          label: u,
+          value: u
+        }))}
       />
 
       {/* RESULT */}
@@ -111,6 +146,21 @@ export default function UnitConverter() {
         </p>
       </div>
 
+      {/* AREA HINT */}
+      {type === "area" && (
+        <div className="result">
+          <p>📐 1 cent = 435.6 sqft</p>
+          <p>📐 100 cents = 1 acre</p>
+        </div>
+      )}
+
+      {/* VOLUME HINT */}
+      {type === "volume" && (
+        <div className="result">
+          <p>📦 1 brass = 100 cft</p>
+          <p>📦 1 cft = 28.3168 liters</p>
+        </div>
+      )}
     </Card>
   );
 }
