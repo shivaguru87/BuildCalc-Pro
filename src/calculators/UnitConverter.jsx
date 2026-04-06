@@ -12,8 +12,6 @@ export default function UnitConverter() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
 
-  const [bags, setBags] = useState(""); // NEW
-
   // ================= UNITS =================
 
   const lengthUnits = {
@@ -34,11 +32,13 @@ export default function UnitConverter() {
     cent: 40.4686
   };
 
+  // 🔥 UPDATED VOLUME (WITH BAG)
   const volumeUnits = {
     cft: 0.0283168,
     m3: 1,
     liters: 0.001,
-    brass: 2.83168
+    brass: 2.83168,
+    bag: 0.035396 // ✅ NEW (1 bag = 1.25 cft)
   };
 
   const units =
@@ -57,21 +57,7 @@ export default function UnitConverter() {
 
   // ================= LIVE UPDATE =================
   useEffect(() => {
-    const out = convert(input, fromUnit, toUnit);
-    setOutput(out);
-
-    // ===== CFT TO BAGS =====
-    if (type === "volume" && input) {
-      const cftValue =
-        fromUnit === "cft"
-          ? Number(input)
-          : Number(input) * units[fromUnit] / units["cft"];
-
-      const bagCalc = cftValue / 1.25; // 1 bag ≈ 1.25 cft
-      setBags(bagCalc.toFixed(2));
-    } else {
-      setBags("");
-    }
+    setOutput(convert(input, fromUnit, toUnit));
   }, [input, fromUnit, toUnit, type]);
 
   // ================= SWAP =================
@@ -93,7 +79,6 @@ export default function UnitConverter() {
           setType(val);
           setInput("");
           setOutput("");
-          setBags("");
 
           if (val === "length") {
             setFromUnit("mm");
@@ -105,7 +90,7 @@ export default function UnitConverter() {
           }
           if (val === "volume") {
             setFromUnit("cft");
-            setToUnit("liters");
+            setToUnit("bag"); // ✅ default now bag
           }
         }}
         options={[
@@ -160,13 +145,6 @@ export default function UnitConverter() {
           {input || 0} {fromUnit} = {output || 0} {toUnit}
         </p>
       </div>
-
-      {/* 🧱 CFT → BAGS */}
-      {type === "volume" && bags && (
-        <div className="result">
-          <p>Bags (approx): {bags}</p>
-        </div>
-      )}
 
       {/* AREA HINT */}
       {type === "area" && (
