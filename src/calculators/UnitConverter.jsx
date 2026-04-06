@@ -12,6 +12,8 @@ export default function UnitConverter() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
 
+  const [bags, setBags] = useState(""); // NEW
+
   // ================= UNITS =================
 
   const lengthUnits = {
@@ -29,7 +31,7 @@ export default function UnitConverter() {
     ft2: 0.092903,
     acre: 4046.86,
     ha: 10000,
-    cent: 40.4686 // ✅ ADDED
+    cent: 40.4686
   };
 
   const volumeUnits = {
@@ -39,7 +41,6 @@ export default function UnitConverter() {
     brass: 2.83168
   };
 
-  // SELECT UNITS
   const units =
     type === "length"
       ? lengthUnits
@@ -56,7 +57,21 @@ export default function UnitConverter() {
 
   // ================= LIVE UPDATE =================
   useEffect(() => {
-    setOutput(convert(input, fromUnit, toUnit));
+    const out = convert(input, fromUnit, toUnit);
+    setOutput(out);
+
+    // ===== CFT TO BAGS =====
+    if (type === "volume" && input) {
+      const cftValue =
+        fromUnit === "cft"
+          ? Number(input)
+          : Number(input) * units[fromUnit] / units["cft"];
+
+      const bagCalc = cftValue / 1.25; // 1 bag ≈ 1.25 cft
+      setBags(bagCalc.toFixed(2));
+    } else {
+      setBags("");
+    }
   }, [input, fromUnit, toUnit, type]);
 
   // ================= SWAP =================
@@ -78,8 +93,8 @@ export default function UnitConverter() {
           setType(val);
           setInput("");
           setOutput("");
+          setBags("");
 
-          // reset defaults
           if (val === "length") {
             setFromUnit("mm");
             setToUnit("m");
@@ -146,6 +161,13 @@ export default function UnitConverter() {
         </p>
       </div>
 
+      {/* 🧱 CFT → BAGS */}
+      {type === "volume" && bags && (
+        <div className="result">
+          <p>Bags (approx): {bags}</p>
+        </div>
+      )}
+
       {/* AREA HINT */}
       {type === "area" && (
         <div className="result">
@@ -159,6 +181,8 @@ export default function UnitConverter() {
         <div className="result">
           <p>📦 1 brass = 100 cft</p>
           <p>📦 1 cft = 28.3168 liters</p>
+          <p>🧱 1 bag ≈ 1.25 cft</p>
+          <p>⚖️ Standard bag weight = 50 kg</p>
         </div>
       )}
     </Card>
