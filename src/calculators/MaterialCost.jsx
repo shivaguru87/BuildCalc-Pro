@@ -41,7 +41,23 @@ export default function MaterialCost() {
       unit: "nos",
       stdCost: 400,
       sizes: ["6A", "10A", "16A", "20A", "32A", "40A", "63A"],
-      types: ["SP", "DP", "TP", "TPN"]
+      types: ["SP", "DP", "TP", "TPN"],
+    
+      // ✅ Price multiplier
+      typePrice: {
+        SP: 1,
+        DP: 1.8,
+        TP: 2.8,
+        TPN: 3.5
+      },
+    
+      // ✅ Hint guide
+      typeHint: {
+        SP: "Used for lights & small loads (single phase)",
+        DP: "Cuts phase + neutral (main supply safety)",
+        TP: "Used in 3-phase motors",
+        TPN: "Main distribution for building (3-phase + neutral)"
+      }
     },
 
     {
@@ -119,20 +135,21 @@ export default function MaterialCost() {
   // ================= CALC =================
 
   const getTotal = (item) => {
-    const d = data[item.name] || {};
-    const qty = Number(d.qty || 0);
+  const d = data[item.name] || {};
+  const qty = Number(d.qty || 0);
 
-    const cost =
-      d.mode === "manual"
-        ? Number(d.cost || 0)
-        : item.stdCost;
+  let cost =
+    d.mode === "manual"
+      ? Number(d.cost || 0)
+      : item.stdCost;
 
-    return qty * cost;
-  };
+  // ✅ Apply type pricing (ONLY for MCB or items with typePrice)
+  if (item.typePrice && d.type) {
+    cost = cost * item.typePrice[d.type];
+  }
 
-  const grandTotal = items.reduce((sum, item) => {
-    return sum + getTotal(item);
-  }, 0);
+  return qty * cost;
+};
 
   // ================= UI =================
 
@@ -204,6 +221,12 @@ export default function MaterialCost() {
                   }))}
                 />
               )}
+            {/* ✅ HINT DISPLAY */}
+                <div className="hint">
+                  {item.typeHint?.[d.type || item.types[0]]}
+                </div>
+              </>
+            )}
 
             {/* QUANTITY */}
             <Input
