@@ -4,7 +4,7 @@ import Input from "../components/Input";
 import Tabs from "../components/Tabs";
 
 export default function MaterialCost() {
-  const [mode, setMode] = useState("construction");
+  const [type, setType] = useState("construction");
 
   // ================= DATA =================
 
@@ -22,15 +22,15 @@ export default function MaterialCost() {
     { name: "Laminate", unit: "sheet", stdCost: 1200 },
     { name: "Paint", unit: "litre", stdCost: 300 },
     { name: "Tiles", unit: "sqft", stdCost: 60 },
-    { name: "Light", unit: "nos", stdCost: 500 },
+    { name: "Lights", unit: "nos", stdCost: 500 },
     { name: "Switch", unit: "nos", stdCost: 150 }
   ];
 
-  const items = mode === "construction" ? constructionItems : interiorItems;
+  const items = type === "construction" ? constructionItems : interiorItems;
+
+  // ================= STATE =================
 
   const [data, setData] = useState({});
-
-  // ================= CALC =================
 
   const update = (name, field, value) => {
     setData((prev) => ({
@@ -39,10 +39,15 @@ export default function MaterialCost() {
     }));
   };
 
+  // ================= CALC =================
+
   const getTotal = (item) => {
     const d = data[item.name] || {};
     const qty = Number(d.qty || 0);
-    const cost = d.mode === "manual" ? Number(d.cost || 0) : item.stdCost;
+    const cost =
+      d.mode === "manual"
+        ? Number(d.cost || 0)
+        : item.stdCost;
 
     return qty * cost;
   };
@@ -54,12 +59,16 @@ export default function MaterialCost() {
   // ================= UI =================
 
   return (
-    <Card title="Material Cost PRO">
+    <Card>
+      <h3>Material Cost PRO</h3>
 
       {/* MAIN TAB */}
       <Tabs
-        value={mode}
-        onChange={setMode}
+        value={type}
+        onChange={(val) => {
+          setType(val);
+          setData({});
+        }}
         options={[
           { label: "Construction", value: "construction" },
           { label: "Interior", value: "interior" }
@@ -71,7 +80,7 @@ export default function MaterialCost() {
         const d = data[item.name] || {};
 
         return (
-          <div key={item.name} className="card" style={{ marginTop: 10 }}>
+          <div key={item.name} className="card">
             <h4>{item.name}</h4>
 
             {/* MODE */}
@@ -88,7 +97,7 @@ export default function MaterialCost() {
             <Input
               label={`Quantity (${item.unit})`}
               value={d.qty || ""}
-              onChange={(v) => update(item.name, "qty", v)}
+              onChange={(val) => update(item.name, "qty", val)}
             />
 
             {/* SIZE */}
@@ -96,7 +105,7 @@ export default function MaterialCost() {
               <Input
                 label="Size (optional)"
                 value={d.size || ""}
-                onChange={(v) => update(item.name, "size", v)}
+                onChange={(val) => update(item.name, "size", val)}
               />
             )}
 
@@ -105,7 +114,7 @@ export default function MaterialCost() {
               <Input
                 label="Thickness (mm)"
                 value={d.thickness || ""}
-                onChange={(v) => update(item.name, "thickness", v)}
+                onChange={(val) => update(item.name, "thickness", val)}
               />
             )}
 
@@ -114,22 +123,20 @@ export default function MaterialCost() {
               <Input
                 label={`Cost per ${item.unit}`}
                 value={d.cost || ""}
-                onChange={(v) => update(item.name, "cost", v)}
+                onChange={(val) => update(item.name, "cost", val)}
               />
             )}
 
             {/* RESULT */}
             <div className="result">
-              <p>
-                Total: ₹ {getTotal(item).toFixed(0)}
-              </p>
+              <p>Total: ₹ {getTotal(item).toFixed(0)}</p>
             </div>
           </div>
         );
       })}
 
       {/* GRAND TOTAL */}
-      <div className="result" style={{ marginTop: 20 }}>
+      <div className="result">
         <h3>Total Cost: ₹ {grandTotal.toFixed(0)}</h3>
       </div>
     </Card>
