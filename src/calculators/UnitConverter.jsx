@@ -12,8 +12,26 @@ export default function UnitConverter() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
 
-  // ================= UNITS =================
+  // ================= PIPE PRO =================
+  const [pipeMode, setPipeMode] = useState("manual"); // manual / standard
+  const [schedule, setSchedule] = useState("40");
+  const [nps, setNps] = useState("1");
 
+  const [od, setOd] = useState("");
+  const [id, setId] = useState("");
+
+  // ================= PIPE DATA =================
+  const pipeData = {
+    "0.5": { od: 21.3, sch40: 2.77, sch80: 3.73 },
+    "0.75": { od: 26.7, sch40: 2.87, sch80: 3.91 },
+    "1": { od: 33.4, sch40: 3.38, sch80: 4.55 },
+    "1.5": { od: 48.3, sch40: 3.68, sch80: 5.08 },
+    "2": { od: 60.3, sch40: 3.91, sch80: 5.54 },
+    "3": { od: 88.9, sch40: 5.49, sch80: 7.62 },
+    "4": { od: 114.3, sch40: 6.02, sch80: 8.56 }
+  };
+
+  // ================= UNITS =================
   const lengthUnits = {
     mm: 0.001,
     cm: 0.01,
@@ -32,13 +50,12 @@ export default function UnitConverter() {
     cent: 40.4686
   };
 
-  // 🔥 UPDATED VOLUME (WITH BAG)
   const volumeUnits = {
     cft: 0.0283168,
     m3: 1,
     liters: 0.001,
     brass: 2.83168,
-    bag: 0.035396 // ✅ NEW (1 bag = 1.25 cft)
+    bag: 0.035396
   };
 
   const units =
@@ -48,16 +65,38 @@ export default function UnitConverter() {
       ? areaUnits
       : volumeUnits;
 
-  // ================= CONVERT =================
+  // ================= NORMAL CONVERT =================
   const convert = (val, from, to) => {
     if (!val) return "";
     const base = Number(val) * units[from];
     return (base / units[to]).toFixed(4);
   };
 
+  // ================= PIPE CALC =================
+  const mmToInch = (val) => (val ? (val / 25.4).toFixed(2) : 0);
+
+  let pipeOD = Number(od);
+  let pipeID = Number(id);
+  let thickness = 0;
+
+  if (pipeMode === "standard") {
+    const data = pipeData[nps];
+    if (data) {
+      pipeOD = data.od;
+      const t = schedule === "40" ? data.sch40 : data.sch80;
+      thickness = t;
+      pipeID = pipeOD - 2 * t;
+    }
+  } else {
+    thickness =
+      pipeOD && pipeID ? ((pipeOD - pipeID) / 2).toFixed(2) : 0;
+  }
+
   // ================= LIVE UPDATE =================
   useEffect(() => {
-    setOutput(convert(input, fromUnit, toUnit));
+    if (type !== "pipe") {
+      setOutput(convert(input, fromUnit, toUnit));
+    }
   }, [input, fromUnit, toUnit, type]);
 
   // ================= SWAP =================
@@ -70,7 +109,7 @@ export default function UnitConverter() {
 
   return (
     <Card>
-      <h3>Unit Converter</h3>
+      <h3>Unit Converter PRO</h3>
 
       {/* TYPE */}
       <Tabs
@@ -79,89 +118,107 @@ export default function UnitConverter() {
           setType(val);
           setInput("");
           setOutput("");
-
-          if (val === "length") {
-            setFromUnit("mm");
-            setToUnit("m");
-          }
-          if (val === "area") {
-            setFromUnit("cent");
-            setToUnit("ft2");
-          }
-          if (val === "volume") {
-            setFromUnit("cft");
-            setToUnit("bag"); // ✅ default now bag
-          }
         }}
         options={[
           { label: "Length", value: "length" },
           { label: "Area", value: "area" },
-          { label: "Volume", value: "volume" }
+          { label: "Volume", value: "volume" },
+          { label: "Pipe PRO", value: "pipe" }
         ]}
       />
 
-      {/* INPUT */}
-      <Input
-        label="From"
-        value={input}
-        onChange={setInput}
-        hint="Enter value"
-      />
+      {/* ================= NORMAL ================= */}
+      {type !== "pipe" && (
+        <>
+          <Input label="From" value={input} onChange={setInput} />
 
-      <Tabs
-        value={fromUnit}
-        onChange={setFromUnit}
-        options={Object.keys(units).map(u => ({
-          label: u,
-          value: u
-        }))}
-      />
+          <Tabs
+            value={fromUnit}
+            onChange={setFromUnit}
+            options={Object.keys(units).map((u) => ({
+              label: u,
+              value: u
+            }))}
+          />
 
-      {/* SWAP */}
-      <button className="ghost" onClick={swap}>
-        ⇅ Swap
-      </button>
+          <button className="ghost" onClick={swap}>
+            ⇅ Swap
+          </button>
 
-      {/* OUTPUT */}
-      <Input
-        label="To"
-        value={output}
-        onChange={() => {}}
-        hint="Converted value"
-      />
+          <Input label="To" value={output} onChange={() => {}} />
 
-      <Tabs
-        value={toUnit}
-        onChange={setToUnit}
-        options={Object.keys(units).map(u => ({
-          label: u,
-          value: u
-        }))}
-      />
+          <Tabs
+            value={toUnit}
+            onChange={setToUnit}
+            options={Object.keys(units).map((u) => ({
+              label: u,
+              value: u
+            }))}
+          />
 
-      {/* RESULT */}
-      <div className="result">
-        <p>
-          {input || 0} {fromUnit} = {output || 0} {toUnit}
-        </p>
-      </div>
-
-      {/* AREA HINT */}
-      {type === "area" && (
-        <div className="result">
-          <p>📐 1 cent = 435.6 sqft</p>
-          <p>📐 100 cents = 1 acre</p>
-        </div>
+          <div className="result">
+            <p>
+              {input || 0} {fromUnit} = {output || 0} {toUnit}
+            </p>
+          </div>
+        </>
       )}
 
-      {/* VOLUME HINT */}
-      {type === "volume" && (
-        <div className="result">
-          <p>📦 1 brass = 100 cft</p>
-          <p>📦 1 cft = 28.3168 liters</p>
-          <p>🧱 1 bag ≈ 1.25 cft</p>
-          <p>⚖️ Standard bag weight = 50 kg</p>
-        </div>
+      {/* ================= PIPE PRO ================= */}
+      {type === "pipe" && (
+        <>
+          <Tabs
+            value={pipeMode}
+            onChange={setPipeMode}
+            options={[
+              { label: "Manual", value: "manual" },
+              { label: "Standard", value: "standard" }
+            ]}
+          />
+
+          {pipeMode === "manual" && (
+            <>
+              <Input
+                label="OD (mm)"
+                value={od}
+                onChange={setOd}
+              />
+              <Input
+                label="ID (mm)"
+                value={id}
+                onChange={setId}
+              />
+            </>
+          )}
+
+          {pipeMode === "standard" && (
+            <>
+              <Tabs
+                value={nps}
+                onChange={setNps}
+                options={Object.keys(pipeData).map((p) => ({
+                  label: `${p}"`,
+                  value: p
+                }))}
+              />
+
+              <Tabs
+                value={schedule}
+                onChange={setSchedule}
+                options={[
+                  { label: "SCH 40", value: "40" },
+                  { label: "SCH 80", value: "80" }
+                ]}
+              />
+            </>
+          )}
+
+          <div className="result">
+            <p>OD: {pipeOD.toFixed(2)} mm ({mmToInch(pipeOD)} inch)</p>
+            <p>ID: {pipeID.toFixed(2)} mm ({mmToInch(pipeID)} inch)</p>
+            <p>Thickness: {thickness} mm</p>
+          </div>
+        </>
       )}
     </Card>
   );
