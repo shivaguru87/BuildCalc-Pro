@@ -6,15 +6,22 @@ import Tabs from "../components/Tabs";
 export default function MaterialCost() {
   const [type, setType] = useState("construction");
 
-  // ================= DATA =================
+  // ================= ITEMS =================
 
   const constructionItems = [
     { name: "Cement Bag", unit: "bag", stdCost: 400 },
     { name: "Bricks", unit: "nos", stdCost: 8, size: true },
     { name: "Sand", unit: "cft", stdCost: 50 },
-    { name: "Aggregate", unit: "cft", stdCost: 60 },
     { name: "Steel", unit: "kg", stdCost: 70 },
-    { name: "Wire", unit: "meter", stdCost: 15 }
+    { name: "Wire", unit: "meter", stdCost: 15 },
+
+    // ELECTRICAL
+    { name: "Switch", unit: "nos", stdCost: 150, typeSelect: ["6A", "16A", "20A"] },
+    { name: "Socket", unit: "nos", stdCost: 200, typeSelect: ["6A", "16A", "20A"] },
+    { name: "MCB", unit: "nos", stdCost: 400 },
+    { name: "Modular Box", unit: "nos", stdCost: 120, size: true },
+    { name: "DB Box", unit: "nos", stdCost: 2500, size: true },
+    { name: "Junction Box", unit: "nos", stdCost: 100, size: true }
   ];
 
   const interiorItems = [
@@ -22,8 +29,10 @@ export default function MaterialCost() {
     { name: "Laminate", unit: "sheet", stdCost: 1200 },
     { name: "Paint", unit: "litre", stdCost: 300 },
     { name: "Tiles", unit: "sqft", stdCost: 60 },
-    { name: "Lights", unit: "nos", stdCost: 500 },
-    { name: "Switch", unit: "nos", stdCost: 150 }
+
+    { name: "LED Strip", unit: "meter", stdCost: 120 },
+    { name: "POP", unit: "sqft", stdCost: 80, size: true },
+    { name: "False Ceiling", unit: "sqft", stdCost: 120, size: true }
   ];
 
   const items = type === "construction" ? constructionItems : interiorItems;
@@ -41,9 +50,19 @@ export default function MaterialCost() {
 
   // ================= CALC =================
 
+  const getQty = (item, d) => {
+    // If dimensions provided → calculate area
+    if (d.l && d.w) {
+      return Number(d.l) * Number(d.w);
+    }
+    return Number(d.qty || 0);
+  };
+
   const getTotal = (item) => {
     const d = data[item.name] || {};
-    const qty = Number(d.qty || 0);
+
+    const qty = getQty(item, d);
+
     const cost =
       d.mode === "manual"
         ? Number(d.cost || 0)
@@ -93,6 +112,18 @@ export default function MaterialCost() {
               ]}
             />
 
+            {/* TYPE SELECT */}
+            {item.typeSelect && (
+              <Tabs
+                value={d.subType || item.typeSelect[0]}
+                onChange={(val) => update(item.name, "subType", val)}
+                options={item.typeSelect.map((t) => ({
+                  label: t,
+                  value: t
+                }))}
+              />
+            )}
+
             {/* QUANTITY */}
             <Input
               label={`Quantity (${item.unit})`}
@@ -100,21 +131,33 @@ export default function MaterialCost() {
               onChange={(val) => update(item.name, "qty", val)}
             />
 
-            {/* SIZE */}
+            {/* SIZE INPUTS */}
             {item.size && (
-              <Input
-                label="Size (optional)"
-                value={d.size || ""}
-                onChange={(val) => update(item.name, "size", val)}
-              />
+              <>
+                <Input
+                  label="Length"
+                  value={d.l || ""}
+                  onChange={(val) => update(item.name, "l", val)}
+                />
+                <Input
+                  label="Width"
+                  value={d.w || ""}
+                  onChange={(val) => update(item.name, "w", val)}
+                />
+                <Input
+                  label="Height"
+                  value={d.h || ""}
+                  onChange={(val) => update(item.name, "h", val)}
+                />
+              </>
             )}
 
             {/* THICKNESS */}
             {item.thickness && (
               <Input
                 label="Thickness (mm)"
-                value={d.thickness || ""}
-                onChange={(val) => update(item.name, "thickness", val)}
+                value={d.t || ""}
+                onChange={(val) => update(item.name, "t", val)}
               />
             )}
 
