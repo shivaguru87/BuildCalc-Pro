@@ -37,12 +37,12 @@ export default function MaterialCost() {
     },
 
     {
-  name: "MCB",
-  unit: "nos",
-  stdCost: 400,
-  sizes: ["6A", "10A", "16A", "20A", "32A", "40A", "63A"],
-  types: ["SP", "DP", "TP", "TPN"]
-}
+      name: "MCB",
+      unit: "nos",
+      stdCost: 400,
+      sizes: ["6A", "10A", "16A", "20A", "32A", "40A", "63A"],
+      types: ["SP", "DP", "TP", "TPN"]
+    },
 
     {
       name: "Modular Box",
