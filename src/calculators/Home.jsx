@@ -44,6 +44,9 @@ export default function Home({ setPage }) {
 		  <button className="primary" onClick={() => setPage("construction")}>
 		  Construction Calculator
 		</button>
+		  <button className="primary" onClick={() => setPage("material")}>
+		  Material Cost
+		</button>
 
       </div>
     </Card>
