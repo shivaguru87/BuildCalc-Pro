@@ -8,14 +8,14 @@ export default function AreaPro() {
   const [type, setType] = useState("rectangle");
   const [unit, setUnit] = useState("ft");
 
-  const [l, setL] = useState(0);
-  const [w, setW] = useState(0);
-  const [r, setR] = useState(0);
-  const [h, setH] = useState(0);
-  const [a, setA] = useState(0);
-  const [b, setB] = useState(0);
+  const [l, setL] = useState("");
+  const [w, setW] = useState("");
+  const [r, setR] = useState("");
+  const [h, setH] = useState("");
+  const [a, setA] = useState("");
+  const [b, setB] = useState("");
 
-  // ✅ Convert all inputs to feet FIRST (no logic change)
+  // ✅ Convert to feet
   const lf = toFeet(Number(l), unit);
   const wf = toFeet(Number(w), unit);
   const rf = toFeet(Number(r), unit);
@@ -23,7 +23,7 @@ export default function AreaPro() {
   const af = toFeet(Number(a), unit);
   const bf = toFeet(Number(b), unit);
 
-  // FORMULAS (same logic, just using converted values)
+  // ✅ FORMULAS
   const rect = lf * wf;
   const square = lf * lf;
   const circle = 3.1416 * rf * rf;
@@ -32,31 +32,42 @@ export default function AreaPro() {
   const cone = 3.1416 * rf * (rf + Math.sqrt(hf * hf + rf * rf));
   const cylinder = 2 * 3.1416 * rf * (rf + hf);
 
-  // ✅ Convert output
+  const getResult = () => {
+    switch (type) {
+      case "rectangle": return rect;
+      case "square": return square;
+      case "circle": return circle;
+      case "triangle": return triangle;
+      case "trapezium": return trapezium;
+      case "cone": return cone;
+      case "cylinder": return cylinder;
+      default: return 0;
+    }
+  };
+
+  const result = getResult();
+
+  // ✅ CONVERSIONS
   const toSqM = (ft) => ft * 0.092903;
   const toSqMM = (ft) => ft * 92903;
-
-  const show = (val) => (
-    <>
-      <p>Area: {val.toFixed(2)} sq.ft</p>
-      <p>{toSqM(val).toFixed(2)} sq.m</p>
-      <p>{toSqMM(val).toFixed(0)} sq.mm</p>
-    </>
-  );
 
   return (
     <Card title="Area Calculator Pro">
 
-      {/* TYPE SELECT */}
-      <div className="tabs-container">
-        <div className="tabs">
-          {["rectangle","square","circle","triangle","trapezium","cone","cylinder"].map(t => (
-            <button key={t} onClick={() => setType(t)}>
-              {t.toUpperCase()}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* TYPE SELECT (FIXED) */}
+      <Tabs
+        value={type}
+        onChange={setType}
+        options={[
+          { label: "Rectangle", value: "rectangle" },
+          { label: "Square", value: "square" },
+          { label: "Circle", value: "circle" },
+          { label: "Triangle", value: "triangle" },
+          { label: "Trapezium", value: "trapezium" },
+          { label: "Cone", value: "cone" },
+          { label: "Cylinder", value: "cylinder" }
+        ]}
+      />
 
       {/* UNIT SELECT */}
       <Tabs
@@ -69,67 +80,57 @@ export default function AreaPro() {
         ]}
       />
 
-      {/* RECTANGLE */}
+      {/* INPUTS */}
       {type === "rectangle" && (
         <>
           <Input label="Length" unit={unit} onChange={setL} />
           <Input label="Width" unit={unit} onChange={setW} />
-          {show(rect)}
         </>
       )}
 
-      {/* SQUARE */}
       {type === "square" && (
-        <>
-          <Input label="Side" unit={unit} onChange={setL} />
-          {show(square)}
-        </>
+        <Input label="Side" unit={unit} onChange={setL} />
       )}
 
-      {/* CIRCLE */}
       {type === "circle" && (
-        <>
-          <Input label="Radius" unit={unit} onChange={setR} />
-          {show(circle)}
-        </>
+        <Input label="Radius" unit={unit} onChange={setR} />
       )}
 
-      {/* TRIANGLE */}
       {type === "triangle" && (
         <>
           <Input label="Base" unit={unit} onChange={setB} />
           <Input label="Height" unit={unit} onChange={setH} />
-          {show(triangle)}
         </>
       )}
 
-      {/* TRAPEZIUM */}
       {type === "trapezium" && (
         <>
           <Input label="Side A" unit={unit} onChange={setA} />
           <Input label="Side B" unit={unit} onChange={setB} />
           <Input label="Height" unit={unit} onChange={setH} />
-          {show(trapezium)}
         </>
       )}
 
-      {/* CONE */}
       {type === "cone" && (
         <>
           <Input label="Radius" unit={unit} onChange={setR} />
           <Input label="Height" unit={unit} onChange={setH} />
-          {show(cone)}
         </>
       )}
 
-      {/* CYLINDER */}
       {type === "cylinder" && (
         <>
           <Input label="Radius" unit={unit} onChange={setR} />
           <Input label="Height" unit={unit} onChange={setH} />
-          {show(cylinder)}
         </>
       )}
+
+      {/* RESULT */}
+      <div className="result">
+        <p>Area: {result.toFixed(2)} sq.ft</p>
+        <p>{toSqM(result).toFixed(2)} sq.m</p>
+        <p>{toSqMM(result).toFixed(0)} sq.mm</p>
+      </div>
 
     </Card>
   );
