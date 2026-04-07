@@ -36,7 +36,13 @@ export default function MaterialCost() {
       sizes: ["6A", "16A", "20A"]
     },
 
-    { name: "MCB", unit: "nos", stdCost: 400 },
+    {
+  name: "MCB",
+  unit: "nos",
+  stdCost: 400,
+  sizes: ["6A", "10A", "16A", "20A", "32A", "40A", "63A"],
+  types: ["SP", "DP", "TP", "TPN"]
+}
 
     {
       name: "Modular Box",
@@ -188,6 +194,16 @@ export default function MaterialCost() {
                 }))}
               />
             )}
+            {item.types && (
+                <Tabs
+                  value={d.type || item.types[0]}
+                  onChange={(val) => update(item.name, "type", val)}
+                  options={item.types.map((t) => ({
+                    label: t,
+                    value: t
+                  }))}
+                />
+              )}
 
             {/* QUANTITY */}
             <Input
