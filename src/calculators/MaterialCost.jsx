@@ -26,14 +26,24 @@ export default function MaterialCost() {
       name: "Switch",
       unit: "nos",
       stdCost: 150,
-      sizes: ["6A", "16A", "20A"]
+      sizes: ["6A", "16A", "20A"],
+      sizePrice: {
+        "6A": 120,
+        "16A": 180,
+        "20A": 220
+      }
     },
 
     {
       name: "Socket",
       unit: "nos",
       stdCost: 200,
-      sizes: ["6A", "16A", "20A"]
+      sizes: ["6A", "16A", "20A"],
+      sizePrice: {
+        "6A": 150,
+        "16A": 220,
+        "20A": 280
+      }
     },
 
     {
@@ -42,6 +52,15 @@ export default function MaterialCost() {
       stdCost: 400,
       sizes: ["6A", "10A", "16A", "20A", "32A", "40A", "63A"],
       types: ["SP", "DP", "TP", "TPN"],
+      sizePrice: {
+        "6A": 250,
+        "10A": 280,
+        "16A": 320,
+        "20A": 350,
+        "32A": 420,
+        "40A": 480,
+        "63A": 550
+      },
       typePrice: {
         SP: 1,
         DP: 1.8,
@@ -49,10 +68,10 @@ export default function MaterialCost() {
         TPN: 3.5
       },
       typeHint: {
-        SP: "Used for lights & small loads (single phase)",
-        DP: "Cuts phase + neutral (main supply safety)",
-        TP: "Used in 3-phase motors",
-        TPN: "Main distribution for building (3-phase + neutral)"
+        SP: "Used for lights & small loads",
+        DP: "Phase + neutral safety",
+        TP: "3-phase motor use",
+        TPN: "Main building distribution"
       }
     },
 
@@ -60,21 +79,36 @@ export default function MaterialCost() {
       name: "Modular Box",
       unit: "nos",
       stdCost: 120,
-      sizes: ["2M", "4M", "6M", "8M"]
+      sizes: ["2M", "4M", "6M", "8M"],
+      sizePrice: {
+        "2M": 100,
+        "4M": 150,
+        "6M": 200,
+        "8M": 260
+      }
     },
 
     {
       name: "DB Box",
       unit: "nos",
       stdCost: 2500,
-      sizes: ["4 Way", "8 Way", "12 Way"]
+      sizes: ["4 Way", "8 Way", "12 Way"],
+      sizePrice: {
+        "4 Way": 2000,
+        "8 Way": 3000,
+        "12 Way": 4000
+      }
     },
 
     {
       name: "Junction Box",
       unit: "nos",
       stdCost: 100,
-      sizes: ["4x4", "6x6"]
+      sizes: ["4x4", "6x6"],
+      sizePrice: {
+        "4x4": 80,
+        "6x6": 120
+      }
     }
   ];
 
@@ -84,14 +118,21 @@ export default function MaterialCost() {
       unit: "sheet",
       stdCost: 2500,
       sizes: ["8x4", "6x4"],
-      thickness: ["6mm", "12mm", "18mm"]
+      thickness: ["6mm", "12mm", "18mm"],
+      sizePrice: {
+        "8x4": 2500,
+        "6x4": 1800
+      }
     },
 
     {
       name: "Laminate",
       unit: "sheet",
       stdCost: 1200,
-      sizes: ["8x4"]
+      sizes: ["8x4"],
+      sizePrice: {
+        "8x4": 1200
+      }
     },
 
     { name: "Paint", unit: "litre", stdCost: 300 },
@@ -103,21 +144,17 @@ export default function MaterialCost() {
     {
       name: "POP",
       unit: "sqft",
-      stdCost: 80,
-      sizes: ["Ceiling", "Wall"]
+      stdCost: 80
     },
 
     {
       name: "False Ceiling",
       unit: "sqft",
-      stdCost: 120,
-      sizes: ["Gypsum", "Grid"]
+      stdCost: 120
     }
   ];
 
   const items = type === "construction" ? constructionItems : interiorItems;
-
-  // ================= STATE =================
 
   const [data, setData] = useState({});
 
@@ -128,19 +165,27 @@ export default function MaterialCost() {
     }));
   };
 
-  // ================= CALC =================
+  // ================= SMART CALC =================
 
   const getTotal = (item) => {
     const d = data[item.name] || {};
     const qty = Number(d.qty || 0);
 
-    let cost =
-      d.mode === "manual"
-        ? Number(d.cost || 0)
-        : item.stdCost;
+    let cost = item.stdCost;
 
+    // SIZE BASED
+    if (item.sizePrice && d.size) {
+      cost = item.sizePrice[d.size];
+    }
+
+    // TYPE BASED
     if (item.typePrice && d.type) {
       cost = cost * item.typePrice[d.type];
+    }
+
+    // MANUAL OVERRIDE
+    if (d.mode === "manual") {
+      cost = Number(d.cost || 0);
     }
 
     return qty * cost;
@@ -150,13 +195,10 @@ export default function MaterialCost() {
     return sum + getTotal(item);
   }, 0);
 
-  // ================= UI =================
-
   return (
     <Card>
       <h3>Material Cost PRO</h3>
 
-      {/* MAIN TAB */}
       <Tabs
         value={type}
         onChange={(val) => {
@@ -169,7 +211,6 @@ export default function MaterialCost() {
         ]}
       />
 
-      {/* ITEMS */}
       {items.map((item) => {
         const d = data[item.name] || {};
 
@@ -177,7 +218,6 @@ export default function MaterialCost() {
           <div key={item.name} className="card">
             <h4>{item.name}</h4>
 
-            {/* MODE */}
             <Tabs
               value={d.mode || "standard"}
               onChange={(val) => update(item.name, "mode", val)}
@@ -187,7 +227,6 @@ export default function MaterialCost() {
               ]}
             />
 
-            {/* SIZE */}
             {item.sizes && (
               <Tabs
                 value={d.size || item.sizes[0]}
@@ -199,19 +238,6 @@ export default function MaterialCost() {
               />
             )}
 
-            {/* THICKNESS */}
-            {item.thickness && (
-              <Tabs
-                value={d.thickness || item.thickness[0]}
-                onChange={(val) => update(item.name, "thickness", val)}
-                options={item.thickness.map((t) => ({
-                  label: t,
-                  value: t
-                }))}
-              />
-            )}
-
-            {/* TYPE + HINT */}
             {item.types && (
               <>
                 <Tabs
@@ -229,14 +255,12 @@ export default function MaterialCost() {
               </>
             )}
 
-            {/* QUANTITY */}
             <Input
               label={`Quantity (${item.unit})`}
               value={d.qty || ""}
               onChange={(val) => update(item.name, "qty", val)}
             />
 
-            {/* COST */}
             {d.mode === "manual" && (
               <Input
                 label={`Cost per ${item.unit}`}
@@ -245,7 +269,6 @@ export default function MaterialCost() {
               />
             )}
 
-            {/* RESULT */}
             <div className="result">
               <p>Total: ₹ {getTotal(item).toFixed(0)}</p>
             </div>
@@ -253,7 +276,6 @@ export default function MaterialCost() {
         );
       })}
 
-      {/* GRAND TOTAL */}
       <div className="result">
         <h3>Total Cost: ₹ {grandTotal.toFixed(0)}</h3>
       </div>
