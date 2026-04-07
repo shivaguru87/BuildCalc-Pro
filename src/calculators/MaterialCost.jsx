@@ -42,16 +42,12 @@ export default function MaterialCost() {
       stdCost: 400,
       sizes: ["6A", "10A", "16A", "20A", "32A", "40A", "63A"],
       types: ["SP", "DP", "TP", "TPN"],
-    
-      // ✅ Price multiplier
       typePrice: {
         SP: 1,
         DP: 1.8,
         TP: 2.8,
         TPN: 3.5
       },
-    
-      // ✅ Hint guide
       typeHint: {
         SP: "Used for lights & small loads (single phase)",
         DP: "Cuts phase + neutral (main supply safety)",
@@ -135,21 +131,24 @@ export default function MaterialCost() {
   // ================= CALC =================
 
   const getTotal = (item) => {
-  const d = data[item.name] || {};
-  const qty = Number(d.qty || 0);
+    const d = data[item.name] || {};
+    const qty = Number(d.qty || 0);
 
-  let cost =
-    d.mode === "manual"
-      ? Number(d.cost || 0)
-      : item.stdCost;
+    let cost =
+      d.mode === "manual"
+        ? Number(d.cost || 0)
+        : item.stdCost;
 
-  // ✅ Apply type pricing (ONLY for MCB or items with typePrice)
-  if (item.typePrice && d.type) {
-    cost = cost * item.typePrice[d.type];
-  }
+    if (item.typePrice && d.type) {
+      cost = cost * item.typePrice[d.type];
+    }
 
-  return qty * cost;
-};
+    return qty * cost;
+  };
+
+  const grandTotal = items.reduce((sum, item) => {
+    return sum + getTotal(item);
+  }, 0);
 
   // ================= UI =================
 
@@ -211,7 +210,10 @@ export default function MaterialCost() {
                 }))}
               />
             )}
+
+            {/* TYPE + HINT */}
             {item.types && (
+              <>
                 <Tabs
                   value={d.type || item.types[0]}
                   onChange={(val) => update(item.name, "type", val)}
@@ -220,8 +222,7 @@ export default function MaterialCost() {
                     value: t
                   }))}
                 />
-              )}
-            {/* ✅ HINT DISPLAY */}
+
                 <div className="hint">
                   {item.typeHint?.[d.type || item.types[0]]}
                 </div>
