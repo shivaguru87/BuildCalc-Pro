@@ -10,29 +10,91 @@ export default function MaterialCost() {
 
   const constructionItems = [
     { name: "Cement Bag", unit: "bag", stdCost: 400 },
-    { name: "Bricks", unit: "nos", stdCost: 8, size: true },
+
+    {
+      name: "Bricks",
+      unit: "nos",
+      stdCost: 8,
+      sizes: ["9x4x3", "8x4x3"]
+    },
+
     { name: "Sand", unit: "cft", stdCost: 50 },
     { name: "Steel", unit: "kg", stdCost: 70 },
     { name: "Wire", unit: "meter", stdCost: 15 },
 
-    // ELECTRICAL
-    { name: "Switch", unit: "nos", stdCost: 150, typeSelect: ["6A", "16A", "20A"] },
-    { name: "Socket", unit: "nos", stdCost: 200, typeSelect: ["6A", "16A", "20A"] },
+    {
+      name: "Switch",
+      unit: "nos",
+      stdCost: 150,
+      sizes: ["6A", "16A", "20A"]
+    },
+
+    {
+      name: "Socket",
+      unit: "nos",
+      stdCost: 200,
+      sizes: ["6A", "16A", "20A"]
+    },
+
     { name: "MCB", unit: "nos", stdCost: 400 },
-    { name: "Modular Box", unit: "nos", stdCost: 120, size: true },
-    { name: "DB Box", unit: "nos", stdCost: 2500, size: true },
-    { name: "Junction Box", unit: "nos", stdCost: 100, size: true }
+
+    {
+      name: "Modular Box",
+      unit: "nos",
+      stdCost: 120,
+      sizes: ["2M", "4M", "6M", "8M"]
+    },
+
+    {
+      name: "DB Box",
+      unit: "nos",
+      stdCost: 2500,
+      sizes: ["4 Way", "8 Way", "12 Way"]
+    },
+
+    {
+      name: "Junction Box",
+      unit: "nos",
+      stdCost: 100,
+      sizes: ["4x4", "6x6"]
+    }
   ];
 
   const interiorItems = [
-    { name: "Plywood", unit: "sheet", stdCost: 2500, size: true, thickness: true },
-    { name: "Laminate", unit: "sheet", stdCost: 1200 },
+    {
+      name: "Plywood",
+      unit: "sheet",
+      stdCost: 2500,
+      sizes: ["8x4", "6x4"],
+      thickness: ["6mm", "12mm", "18mm"]
+    },
+
+    {
+      name: "Laminate",
+      unit: "sheet",
+      stdCost: 1200,
+      sizes: ["8x4"]
+    },
+
     { name: "Paint", unit: "litre", stdCost: 300 },
+
     { name: "Tiles", unit: "sqft", stdCost: 60 },
 
     { name: "LED Strip", unit: "meter", stdCost: 120 },
-    { name: "POP", unit: "sqft", stdCost: 80, size: true },
-    { name: "False Ceiling", unit: "sqft", stdCost: 120, size: true }
+
+    {
+      name: "POP",
+      unit: "sqft",
+      stdCost: 80,
+      sizes: ["Ceiling", "Wall"]
+    },
+
+    {
+      name: "False Ceiling",
+      unit: "sqft",
+      stdCost: 120,
+      sizes: ["Gypsum", "Grid"]
+    }
   ];
 
   const items = type === "construction" ? constructionItems : interiorItems;
@@ -50,18 +112,9 @@ export default function MaterialCost() {
 
   // ================= CALC =================
 
-  const getQty = (item, d) => {
-    // If dimensions provided → calculate area
-    if (d.l && d.w) {
-      return Number(d.l) * Number(d.w);
-    }
-    return Number(d.qty || 0);
-  };
-
   const getTotal = (item) => {
     const d = data[item.name] || {};
-
-    const qty = getQty(item, d);
+    const qty = Number(d.qty || 0);
 
     const cost =
       d.mode === "manual"
@@ -112,12 +165,24 @@ export default function MaterialCost() {
               ]}
             />
 
-            {/* TYPE SELECT */}
-            {item.typeSelect && (
+            {/* SIZE */}
+            {item.sizes && (
               <Tabs
-                value={d.subType || item.typeSelect[0]}
-                onChange={(val) => update(item.name, "subType", val)}
-                options={item.typeSelect.map((t) => ({
+                value={d.size || item.sizes[0]}
+                onChange={(val) => update(item.name, "size", val)}
+                options={item.sizes.map((s) => ({
+                  label: s,
+                  value: s
+                }))}
+              />
+            )}
+
+            {/* THICKNESS */}
+            {item.thickness && (
+              <Tabs
+                value={d.thickness || item.thickness[0]}
+                onChange={(val) => update(item.name, "thickness", val)}
+                options={item.thickness.map((t) => ({
                   label: t,
                   value: t
                 }))}
@@ -130,36 +195,6 @@ export default function MaterialCost() {
               value={d.qty || ""}
               onChange={(val) => update(item.name, "qty", val)}
             />
-
-            {/* SIZE INPUTS */}
-            {item.size && (
-              <>
-                <Input
-                  label="Length"
-                  value={d.l || ""}
-                  onChange={(val) => update(item.name, "l", val)}
-                />
-                <Input
-                  label="Width"
-                  value={d.w || ""}
-                  onChange={(val) => update(item.name, "w", val)}
-                />
-                <Input
-                  label="Height"
-                  value={d.h || ""}
-                  onChange={(val) => update(item.name, "h", val)}
-                />
-              </>
-            )}
-
-            {/* THICKNESS */}
-            {item.thickness && (
-              <Input
-                label="Thickness (mm)"
-                value={d.t || ""}
-                onChange={(val) => update(item.name, "t", val)}
-              />
-            )}
 
             {/* COST */}
             {d.mode === "manual" && (
