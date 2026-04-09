@@ -4,15 +4,23 @@ import Input from "../components/Input";
 import Tabs from "../components/Tabs";
 
 export default function FurnitureEstimator() {
-  const [type, setType] = useState("wardrobe");
-  const [mode, setMode] = useState("box");
   const [unit, setUnit] = useState("ft");
 
-  const [l, setL] = useState("");
-  const [w, setW] = useState("");
-  const [h, setH] = useState("");
+  const [pieces, setPieces] = useState([
+    { l: "", w: "", t: "18", qty: "1" }
+  ]);
 
-  // ================= UNIT CONVERT =================
+  const addPiece = () => {
+    setPieces([...pieces, { l: "", w: "", t: "18", qty: "1" }]);
+  };
+
+  const updatePiece = (i, field, val) => {
+    const updated = [...pieces];
+    updated[i][field] = val;
+    setPieces(updated);
+  };
+
+  // ================= UNIT =================
   const toFeet = (val) => {
     const v = Number(val || 0);
     if (unit === "ft") return v;
@@ -21,107 +29,92 @@ export default function FurnitureEstimator() {
     return v;
   };
 
-  const L = toFeet(l);
-  const W = toFeet(w);
-  const H = toFeet(h);
+  // ================= FLATTEN PIECES =================
+  const allPieces = [];
 
-  const D = W;
+  pieces.forEach((p) => {
+    const L = toFeet(p.l);
+    const W = toFeet(p.w);
+    const qty = Number(p.qty || 0);
+
+    for (let i = 0; i < qty; i++) {
+      if (L > 0 && W > 0) {
+        allPieces.push({ l: L, w: W });
+      }
+    }
+  });
+
+  // ================= CUT OPTIMIZATION =================
+  const SHEET_W = 4;
+  const SHEET_H = 8;
+
+  const optimize = () => {
+    let sheets = [];
+    let currentSheet = [];
+    let currentY = 0;
+    let rowHeight = 0;
+    let currentX = 0;
+
+    const sorted = [...allPieces].sort((a, b) => b.w - a.w);
+
+    sorted.forEach((piece) => {
+      if (currentX + piece.l <= SHEET_W) {
+        currentSheet.push(piece);
+        currentX += piece.l;
+        rowHeight = Math.max(rowHeight, piece.w);
+      } else {
+        currentY += rowHeight;
+        currentX = 0;
+        rowHeight = 0;
+
+        if (currentY + piece.w <= SHEET_H) {
+          currentSheet.push(piece);
+          currentX += piece.l;
+          rowHeight = piece.w;
+        } else {
+          sheets.push(currentSheet);
+          currentSheet = [piece];
+          currentX = piece.l;
+          currentY = 0;
+          rowHeight = piece.w;
+        }
+      }
+    });
+
+    if (currentSheet.length) sheets.push(currentSheet);
+
+    return sheets;
+  };
+
+  const sheets = optimize();
 
   // ================= AREA =================
-  const boxArea =
-    2 * (H * D) +
-    2 * (L * D) +
-    (L * H);
+  let totalArea = 0;
+  allPieces.forEach(p => totalArea += p.l * p.w);
 
-  const panelArea = L * H;
-  const totalArea = mode === "box" ? boxArea : panelArea;
+  const usedArea = totalArea;
+  const totalSheetArea = sheets.length * 32;
+  const waste = totalSheetArea - usedArea;
+  const wastePercent = totalSheetArea > 0
+    ? (waste / totalSheetArea) * 100
+    : 0;
 
-  // ================= MATERIAL =================
-  const plywoodSheets = totalArea / 32;
+  // ================= COST =================
+  const plywoodSheets = sheets.length;
   const sunmicaSheets = (totalArea * 0.8) / 32;
   const fevicol = totalArea / 100;
 
-  // ================= SMART LOGIC =================
-
-  let shelves = 0;
-  let shelfGap = 0;
-  let drawers = 0;
-  let drawerHeight = 0;
-  let hanging = false;
-
-  // 🔹 WARDROBE
-  if (type === "wardrobe") {
-    shelves = H >= 7 ? 4 : 3;
-    shelfGap = (H * 12) / shelves;
-    drawers = Math.floor(H / 2);
-    drawerHeight = 6;
-    hanging = true;
-  }
-
-  // 🔹 TV UNIT
-  if (type === "tv") {
-    shelves = 2;
-    drawers = 2;
-    drawerHeight = 5;
-  }
-
-  // 🔹 BED
-  if (type === "bed") {
-    drawers = mode === "box" ? 2 : 0;
-    drawerHeight = 8;
-  }
-
-  // 🔹 MODULAR KITCHEN (NEW)
-  if (type === "kitchen") {
-    shelves = Math.floor(H / 2);
-    drawers = Math.floor(L / 2);
-    drawerHeight = 6;
-  }
-
-  // ================= HARDWARE =================
-  const doors = Math.ceil(L / 2);
-  const hinges = doors * 2;
-  const handles = doors;
-
-  // ================= COST =================
   const materialCost =
     plywoodSheets * 2500 +
     sunmicaSheets * 1200 +
-    fevicol * 200 +
-    hinges * 80 +
-    handles * 150;
+    fevicol * 200;
 
-  // ✅ LABOUR 35%
-  const labourCost = materialCost * 0.35;
-  const totalCost = materialCost + labourCost;
+  const labour = materialCost * 0.35;
+  const totalCost = materialCost + labour;
 
   return (
     <Card>
-      <h3>Furniture Estimator PRO</h3>
-
-      {/* TYPE */}
-      <Tabs
-        value={type}
-        onChange={setType}
-        options={[
-          { label: "Wardrobe", value: "wardrobe" },
-          { label: "Bed", value: "bed" },
-          { label: "TV Unit", value: "tv" },
-          { label: "Dressing", value: "dressing" },
-          { label: "Dining", value: "dining" },
-          { label: "Kitchen", value: "kitchen" }
-        ]}
-      />
-
-      {/* MODE */}
-      <Tabs
-        value={mode}
-        onChange={setMode}
-        options={[
-          { label: "Box", value: "box" },
-          { label: "Panel", value: "panel" }
-        ]}
-      />
+      <h3>Custom Furniture PRO (Cut Optimizer)</h3>
 
       {/* UNIT */}
       <Tabs
@@ -134,48 +127,51 @@ export default function FurnitureEstimator() {
         ]}
       />
 
-      {/* INPUTS */}
-      <Input label="Length" unit={unit} value={l} onChange={setL} />
-      <Input label="Width (Depth)" unit={unit} value={w} onChange={setW} />
-      <Input label="Height" unit={unit} value={h} onChange={setH} />
+      {/* PIECES */}
+      {pieces.map((p, i) => (
+        <div key={i} className="card">
+          <h4>Piece {i + 1}</h4>
+
+          <Input label="Length" unit={unit} value={p.l} onChange={(v) => updatePiece(i, "l", v)} />
+          <Input label="Width" unit={unit} value={p.w} onChange={(v) => updatePiece(i, "w", v)} />
+
+          <Tabs
+            value={p.t}
+            onChange={(v) => updatePiece(i, "t", v)}
+            options={[
+              { label: "6mm", value: "6" },
+              { label: "12mm", value: "12" },
+              { label: "18mm", value: "18" }
+            ]}
+          />
+
+          <Input label="Quantity" value={p.qty} onChange={(v) => updatePiece(i, "qty", v)} />
+        </div>
+      ))}
+
+      <button className="primary" onClick={addPiece}>
+        + Add Piece
+      </button>
+
+      {/* OPTIMIZATION RESULT */}
+      <div className="result">
+        <h4>Cut Optimization</h4>
+        <p>Sheets Required: {sheets.length}</p>
+        <p>Waste: {waste.toFixed(2)} sqft ({wastePercent.toFixed(1)}%)</p>
+      </div>
 
       {/* MATERIAL */}
       <div className="result">
-        <p>Plywood: {plywoodSheets.toFixed(2)} sheets</p>
+        <p>Plywood: {plywoodSheets} sheets</p>
         <p>Sunmica: {sunmicaSheets.toFixed(2)} sheets</p>
         <p>Fevicol: {fevicol.toFixed(2)} kg</p>
       </div>
 
-      {/* DESIGN */}
-      <div className="result">
-        <h4>Design Breakdown</h4>
-
-        {shelves > 0 && (
-          <p>
-            Shelves: {shelves} (Gap ~ {shelfGap.toFixed(0)} inch)
-          </p>
-        )}
-
-        {drawers > 0 && (
-          <p>
-            Drawers: {drawers} (Height ~ {drawerHeight} inch)
-          </p>
-        )}
-
-        {hanging && <p>Hanging Space: Yes (~3 ft)</p>}
-      </div>
-
-      {/* HARDWARE */}
-      <div className="result">
-        <p>Hinges: {hinges} nos</p>
-        <p>Handles: {handles} nos</p>
-      </div>
-
       {/* COST */}
       <div className="result">
-        <p>Material Cost: ₹ {materialCost.toFixed(0)}</p>
-        <p>Labour (35%): ₹ {labourCost.toFixed(0)}</p>
-        <h3>Total Cost: ₹ {totalCost.toFixed(0)}</h3>
+        <p>Material: ₹ {materialCost.toFixed(0)}</p>
+        <p>Labour (35%): ₹ {labour.toFixed(0)}</p>
+        <h3>Total: ₹ {totalCost.toFixed(0)}</h3>
       </div>
     </Card>
   );
