@@ -47,6 +47,9 @@ export default function Home({ setPage }) {
 		  <button className="primary" onClick={() => setPage("material")}>
 		  Material Cost
 		</button>
+		  <button className="primary" onClick={() => setPage("furniture")}>
+		  Furniture Estimator
+		</button>
 
       </div>
     </Card>
