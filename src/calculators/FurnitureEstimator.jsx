@@ -29,110 +29,100 @@ export default function FurnitureEstimator() {
     return v;
   };
 
-  // ================= GROUP BY THICKNESS =================
-  const groups = {};
-
-  pieces.forEach((p) => {
-    const L = toFeet(p.l);
-    const W = toFeet(p.w);
-    const qty = Number(p.qty || 0);
-    const t = p.t;
-
-    if (!groups[t]) groups[t] = [];
-
-    for (let i = 0; i < qty; i++) {
-      if (L > 0 && W > 0) {
-        groups[t].push({ l: L, w: W });
-      }
-    }
-  });
-
   const SHEET_W = 4;
   const SHEET_H = 8;
 
-  // ================= OPTIMIZER =================
-  const optimize = (pieces) => {
-    let sheets = [];
+  // ================= LEFTOVER ENGINE =================
+  const simulateCutting = () => {
+    let sheets = {
+      "6": [{ w: SHEET_W, h: SHEET_H }],
+      "12": [{ w: SHEET_W, h: SHEET_H }],
+      "18": [{ w: SHEET_W, h: SHEET_H }]
+    };
 
-    pieces = [...pieces].sort((a, b) => b.w - a.w);
+    let results = [];
 
-    pieces.forEach((piece) => {
-      let placed = false;
+    pieces.forEach((p, index) => {
+      const L = toFeet(p.l);
+      const W = toFeet(p.w);
+      const qty = Number(p.qty || 0);
+      const t = p.t;
 
-      for (let sheet of sheets) {
-        for (let space of sheet.spaces) {
-          if (piece.l <= space.w && piece.w <= space.h) {
-            sheet.used.push(piece);
+      let logs = [];
 
-            // split leftover space
-            sheet.spaces.push({
-              w: space.w - piece.l,
-              h: piece.w
-            });
+      for (let q = 0; q < qty; q++) {
+        let placed = false;
 
-            sheet.spaces.push({
+        for (let i = 0; i < sheets[t].length; i++) {
+          let space = sheets[t][i];
+
+          if (L <= space.w && W <= space.h) {
+            // remove used space
+            sheets[t].splice(i, 1);
+
+            // create leftovers
+            const right = {
+              w: space.w - L,
+              h: W
+            };
+
+            const bottom = {
               w: space.w,
-              h: space.h - piece.w
-            });
+              h: space.h - W
+            };
 
-            sheet.spaces.splice(sheet.spaces.indexOf(space), 1);
+            if (right.w > 0 && right.h > 0) sheets[t].push(right);
+            if (bottom.w > 0 && bottom.h > 0) sheets[t].push(bottom);
+
             placed = true;
             break;
           }
         }
-        if (placed) break;
+
+        if (!placed) {
+          // new sheet
+          sheets[t].push({ w: SHEET_W, h: SHEET_H });
+        }
       }
 
-      if (!placed) {
-        sheets.push({
-          used: [piece],
-          spaces: [
-            { w: SHEET_W - piece.l, h: piece.w },
-            { w: SHEET_W, h: SHEET_H - piece.w }
-          ]
-        });
-      }
+      // calculate leftover sqft
+      let leftoverArea = sheets[t].reduce(
+        (sum, s) => sum + s.w * s.h,
+        0
+      );
+
+      logs = sheets[t].map((s) => `${s.w.toFixed(2)} × ${s.h.toFixed(2)}`);
+
+      results.push({
+        index,
+        leftoverArea,
+        blocks: logs
+      });
     });
 
-    return sheets;
+    return results;
   };
 
-  // ================= CALC =================
+  const cutResults = simulateCutting();
+
+  // ================= TOTAL =================
   let totalSheets = 0;
   let totalArea = 0;
-  let layoutOutput = [];
 
-  Object.keys(groups).forEach((thickness) => {
-    const sheets = optimize(groups[thickness]);
-
-    totalSheets += sheets.length;
-
-    layoutOutput.push({
-      thickness,
-      sheets
-    });
-
-    groups[thickness].forEach(p => {
-      totalArea += p.l * p.w;
-    });
+  cutResults.forEach((r) => {
+    totalArea += r.leftoverArea;
   });
 
-  const sunmicaSheets = (totalArea * 0.8) / 32;
-  const fevicol = totalArea / 100;
+  const plywoodSheets = Math.ceil(totalArea / 32);
 
-  const materialCost =
-    totalSheets * 2500 +
-    sunmicaSheets * 1200 +
-    fevicol * 200;
-
+  const materialCost = plywoodSheets * 2500;
   const labour = materialCost * 0.35;
   const totalCost = materialCost + labour;
 
   return (
     <Card>
-      <h3>Custom Furniture PRO (Advanced)</h3>
+      <h3>Custom Furniture PRO (Live Cutting)</h3>
 
-      {/* UNIT */}
       <Tabs
         value={unit}
         onChange={setUnit}
@@ -143,58 +133,48 @@ export default function FurnitureEstimator() {
         ]}
       />
 
-      {/* PIECES */}
-      {pieces.map((p, i) => (
-        <div key={i} className="card">
-          <h4>Piece {i + 1}</h4>
+      {pieces.map((p, i) => {
+        const res = cutResults[i] || {};
 
-          <Input label="Length" unit={unit} value={p.l} onChange={(v) => updatePiece(i, "l", v)} />
-          <Input label="Width" unit={unit} value={p.w} onChange={(v) => updatePiece(i, "w", v)} />
+        return (
+          <div key={i} className="card">
+            <h4>Piece {i + 1}</h4>
 
-          <Tabs
-            value={p.t}
-            onChange={(v) => updatePiece(i, "t", v)}
-            options={[
-              { label: "6mm", value: "6" },
-              { label: "12mm", value: "12" },
-              { label: "18mm", value: "18" }
-            ]}
-          />
+            <Input label="Length" unit={unit} value={p.l} onChange={(v) => updatePiece(i, "l", v)} />
+            <Input label="Width" unit={unit} value={p.w} onChange={(v) => updatePiece(i, "w", v)} />
 
-          <Input label="Quantity" value={p.qty} onChange={(v) => updatePiece(i, "qty", v)} />
-        </div>
-      ))}
+            <Tabs
+              value={p.t}
+              onChange={(v) => updatePiece(i, "t", v)}
+              options={[
+                { label: "6mm", value: "6" },
+                { label: "12mm", value: "12" },
+                { label: "18mm", value: "18" }
+              ]}
+            />
+
+            <Input label="Quantity" value={p.qty} onChange={(v) => updatePiece(i, "qty", v)} />
+
+            {/* 🔥 LEFTOVER DISPLAY */}
+            <div className="result">
+              <p><b>Remaining Area:</b> {res.leftoverArea?.toFixed(2)} sqft</p>
+
+              <p><b>Remaining Pieces:</b></p>
+              {res.blocks?.map((b, idx) => (
+                <p key={idx}>• {b} ft</p>
+              ))}
+            </div>
+          </div>
+        );
+      })}
 
       <button className="primary" onClick={addPiece}>
         + Add Piece
       </button>
 
-      {/* CUT LAYOUT */}
+      {/* FINAL COST */}
       <div className="result">
-        <h4>Cut Layout</h4>
-
-        {layoutOutput.map((group, i) => (
-          <div key={i}>
-            <p><b>{group.thickness}mm Sheets:</b> {group.sheets.length}</p>
-
-            {group.sheets.map((s, idx) => (
-              <p key={idx}>
-                Sheet {idx + 1}: {s.used.length} pieces
-              </p>
-            ))}
-          </div>
-        ))}
-      </div>
-
-      {/* MATERIAL */}
-      <div className="result">
-        <p>Total Sheets: {totalSheets}</p>
-        <p>Sunmica: {sunmicaSheets.toFixed(2)} sheets</p>
-        <p>Fevicol: {fevicol.toFixed(2)} kg</p>
-      </div>
-
-      {/* COST */}
-      <div className="result">
+        <p>Estimated Sheets: {plywoodSheets}</p>
         <p>Material: ₹ {materialCost.toFixed(0)}</p>
         <p>Labour (35%): ₹ {labour.toFixed(0)}</p>
         <h3>Total: ₹ {totalCost.toFixed(0)}</h3>
