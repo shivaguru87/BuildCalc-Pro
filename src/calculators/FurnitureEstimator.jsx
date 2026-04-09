@@ -32,12 +32,12 @@ export default function FurnitureEstimator() {
   const SHEET_W = 4;
   const SHEET_H = 8;
 
-  // ================= LEFTOVER ENGINE =================
-  const simulateCutting = () => {
+  // ================= GLOBAL CUT ENGINE =================
+  const simulateGlobalCut = () => {
     let sheets = {
-      "6": [{ w: SHEET_W, h: SHEET_H }],
-      "12": [{ w: SHEET_W, h: SHEET_H }],
-      "18": [{ w: SHEET_W, h: SHEET_H }]
+      "6": [],
+      "12": [],
+      "18": []
     };
 
     let results = [];
@@ -48,7 +48,9 @@ export default function FurnitureEstimator() {
       const qty = Number(p.qty || 0);
       const t = p.t;
 
-      let logs = [];
+      if (!sheets[t].length) {
+        sheets[t].push({ w: SHEET_W, h: SHEET_H });
+      }
 
       for (let q = 0; q < qty; q++) {
         let placed = false;
@@ -56,19 +58,26 @@ export default function FurnitureEstimator() {
         for (let i = 0; i < sheets[t].length; i++) {
           let space = sheets[t][i];
 
-          if (L <= space.w && W <= space.h) {
-            // remove used space
+          // allow rotation
+          let fitNormal = L <= space.h && W <= space.w;
+          let fitRotate = W <= space.h && L <= space.w;
+
+          if (fitNormal || fitRotate) {
             sheets[t].splice(i, 1);
 
-            // create leftovers
+            let cutL = fitNormal ? L : W;
+            let cutW = fitNormal ? W : L;
+
+            // RIGHT leftover
             const right = {
-              w: space.w - L,
-              h: W
+              w: space.w - cutW,
+              h: cutL
             };
 
+            // BOTTOM leftover
             const bottom = {
               w: space.w,
-              h: space.h - W
+              h: space.h - cutL
             };
 
             if (right.w > 0 && right.h > 0) sheets[t].push(right);
@@ -79,49 +88,49 @@ export default function FurnitureEstimator() {
           }
         }
 
+        // ❗ Only create new sheet if no space fits
         if (!placed) {
-          // new sheet
           sheets[t].push({ w: SHEET_W, h: SHEET_H });
         }
       }
 
-      // calculate leftover sqft
-      let leftoverArea = sheets[t].reduce(
+      // 🔥 snapshot after this piece
+      const leftoverArea = sheets[t].reduce(
         (sum, s) => sum + s.w * s.h,
         0
       );
 
-      logs = sheets[t].map((s) => `${s.w.toFixed(2)} × ${s.h.toFixed(2)}`);
+      const blocks = sheets[t].map(
+        (s) => `${s.w.toFixed(2)} × ${s.h.toFixed(2)}`
+      );
 
       results.push({
         index,
         leftoverArea,
-        blocks: logs
+        blocks
       });
     });
 
-    return results;
+    return { results, sheets };
   };
 
-  const cutResults = simulateCutting();
+  const { results, sheets } = simulateGlobalCut();
 
-  // ================= TOTAL =================
+  // ================= FINAL =================
   let totalSheets = 0;
-  let totalArea = 0;
 
-  cutResults.forEach((r) => {
-    totalArea += r.leftoverArea;
+  Object.keys(sheets).forEach((t) => {
+    totalSheets += Math.ceil(sheets[t].length / 2); 
+    // approx grouping into sheets
   });
 
-  const plywoodSheets = Math.ceil(totalArea / 32);
-
-  const materialCost = plywoodSheets * 2500;
+  const materialCost = totalSheets * 2500;
   const labour = materialCost * 0.35;
   const totalCost = materialCost + labour;
 
   return (
     <Card>
-      <h3>Custom Furniture PRO (Live Cutting)</h3>
+      <h3>Custom Furniture PRO (Correct Engine)</h3>
 
       <Tabs
         value={unit}
@@ -134,7 +143,7 @@ export default function FurnitureEstimator() {
       />
 
       {pieces.map((p, i) => {
-        const res = cutResults[i] || {};
+        const res = results[i] || {};
 
         return (
           <div key={i} className="card">
@@ -155,7 +164,7 @@ export default function FurnitureEstimator() {
 
             <Input label="Quantity" value={p.qty} onChange={(v) => updatePiece(i, "qty", v)} />
 
-            {/* 🔥 LEFTOVER DISPLAY */}
+            {/* ✅ LIVE LEFTOVER */}
             <div className="result">
               <p><b>Remaining Area:</b> {res.leftoverArea?.toFixed(2)} sqft</p>
 
@@ -172,9 +181,9 @@ export default function FurnitureEstimator() {
         + Add Piece
       </button>
 
-      {/* FINAL COST */}
+      {/* FINAL */}
       <div className="result">
-        <p>Estimated Sheets: {plywoodSheets}</p>
+        <p>Estimated Sheets: {totalSheets}</p>
         <p>Material: ₹ {materialCost.toFixed(0)}</p>
         <p>Labour (35%): ₹ {labour.toFixed(0)}</p>
         <h3>Total: ₹ {totalCost.toFixed(0)}</h3>
