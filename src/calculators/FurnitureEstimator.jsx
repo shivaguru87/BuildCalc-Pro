@@ -29,83 +29,99 @@ export default function FurnitureEstimator() {
     return v;
   };
 
-  // ================= FLATTEN PIECES =================
-  const allPieces = [];
+  // ================= GROUP BY THICKNESS =================
+  const groups = {};
 
   pieces.forEach((p) => {
     const L = toFeet(p.l);
     const W = toFeet(p.w);
     const qty = Number(p.qty || 0);
+    const t = p.t;
+
+    if (!groups[t]) groups[t] = [];
 
     for (let i = 0; i < qty; i++) {
       if (L > 0 && W > 0) {
-        allPieces.push({ l: L, w: W });
+        groups[t].push({ l: L, w: W });
       }
     }
   });
 
-  // ================= CUT OPTIMIZATION =================
   const SHEET_W = 4;
   const SHEET_H = 8;
 
-  const optimize = () => {
+  // ================= OPTIMIZER =================
+  const optimize = (pieces) => {
     let sheets = [];
-    let currentSheet = [];
-    let currentY = 0;
-    let rowHeight = 0;
-    let currentX = 0;
 
-    const sorted = [...allPieces].sort((a, b) => b.w - a.w);
+    pieces = [...pieces].sort((a, b) => b.w - a.w);
 
-    sorted.forEach((piece) => {
-      if (currentX + piece.l <= SHEET_W) {
-        currentSheet.push(piece);
-        currentX += piece.l;
-        rowHeight = Math.max(rowHeight, piece.w);
-      } else {
-        currentY += rowHeight;
-        currentX = 0;
-        rowHeight = 0;
+    pieces.forEach((piece) => {
+      let placed = false;
 
-        if (currentY + piece.w <= SHEET_H) {
-          currentSheet.push(piece);
-          currentX += piece.l;
-          rowHeight = piece.w;
-        } else {
-          sheets.push(currentSheet);
-          currentSheet = [piece];
-          currentX = piece.l;
-          currentY = 0;
-          rowHeight = piece.w;
+      for (let sheet of sheets) {
+        for (let space of sheet.spaces) {
+          if (piece.l <= space.w && piece.w <= space.h) {
+            sheet.used.push(piece);
+
+            // split leftover space
+            sheet.spaces.push({
+              w: space.w - piece.l,
+              h: piece.w
+            });
+
+            sheet.spaces.push({
+              w: space.w,
+              h: space.h - piece.w
+            });
+
+            sheet.spaces.splice(sheet.spaces.indexOf(space), 1);
+            placed = true;
+            break;
+          }
         }
+        if (placed) break;
+      }
+
+      if (!placed) {
+        sheets.push({
+          used: [piece],
+          spaces: [
+            { w: SHEET_W - piece.l, h: piece.w },
+            { w: SHEET_W, h: SHEET_H - piece.w }
+          ]
+        });
       }
     });
-
-    if (currentSheet.length) sheets.push(currentSheet);
 
     return sheets;
   };
 
-  const sheets = optimize();
-
-  // ================= AREA =================
+  // ================= CALC =================
+  let totalSheets = 0;
   let totalArea = 0;
-  allPieces.forEach(p => totalArea += p.l * p.w);
+  let layoutOutput = [];
 
-  const usedArea = totalArea;
-  const totalSheetArea = sheets.length * 32;
-  const waste = totalSheetArea - usedArea;
-  const wastePercent = totalSheetArea > 0
-    ? (waste / totalSheetArea) * 100
-    : 0;
+  Object.keys(groups).forEach((thickness) => {
+    const sheets = optimize(groups[thickness]);
 
-  // ================= COST =================
-  const plywoodSheets = sheets.length;
+    totalSheets += sheets.length;
+
+    layoutOutput.push({
+      thickness,
+      sheets
+    });
+
+    groups[thickness].forEach(p => {
+      totalArea += p.l * p.w;
+    });
+  });
+
   const sunmicaSheets = (totalArea * 0.8) / 32;
   const fevicol = totalArea / 100;
 
   const materialCost =
-    plywoodSheets * 2500 +
+    totalSheets * 2500 +
     sunmicaSheets * 1200 +
     fevicol * 200;
 
@@ -114,7 +130,7 @@ export default function FurnitureEstimator() {
 
   return (
     <Card>
-      <h3>Custom Furniture PRO (Cut Optimizer)</h3>
+      <h3>Custom Furniture PRO (Advanced)</h3>
 
       {/* UNIT */}
       <Tabs
@@ -153,16 +169,26 @@ export default function FurnitureEstimator() {
         + Add Piece
       </button>
 
-      {/* OPTIMIZATION RESULT */}
+      {/* CUT LAYOUT */}
       <div className="result">
-        <h4>Cut Optimization</h4>
-        <p>Sheets Required: {sheets.length}</p>
-        <p>Waste: {waste.toFixed(2)} sqft ({wastePercent.toFixed(1)}%)</p>
+        <h4>Cut Layout</h4>
+
+        {layoutOutput.map((group, i) => (
+          <div key={i}>
+            <p><b>{group.thickness}mm Sheets:</b> {group.sheets.length}</p>
+
+            {group.sheets.map((s, idx) => (
+              <p key={idx}>
+                Sheet {idx + 1}: {s.used.length} pieces
+              </p>
+            ))}
+          </div>
+        ))}
       </div>
 
       {/* MATERIAL */}
       <div className="result">
-        <p>Plywood: {plywoodSheets} sheets</p>
+        <p>Total Sheets: {totalSheets}</p>
         <p>Sunmica: {sunmicaSheets.toFixed(2)} sheets</p>
         <p>Fevicol: {fevicol.toFixed(2)} kg</p>
       </div>
