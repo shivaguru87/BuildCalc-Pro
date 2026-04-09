@@ -14,6 +14,7 @@ import TileCalculator from "./calculators/TileCalculator";
 import PaintCalculator from "./calculators/PaintCalculator";
 import ConstructionCalculator from "./calculators/ConstructionCalculator";
 import MaterialCost from "./calculators/MaterialCost";
+import FurnitureEstimator from "./calculators/FurnitureEstimator";
 import "./styles.css";
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
       {page === "paint" && <PaintCalculator />}
       {page === "construction" && <ConstructionCalculator />}
       {page === "material" && <MaterialCost />}
+      {page === "furniture" && <FurnitureEstimator />}
 
       {page !== "home" && (
         <button className="ghost" onClick={() => setPage("home")}>
