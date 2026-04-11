@@ -50,6 +50,9 @@ export default function Home({ setPage }) {
 		  <button className="primary" onClick={() => setPage("furniture")}>
 		  Furniture Estimator
 		</button>
+		  <button className="primary" onClick={() => setPage("furniturePro")}>
+		  Furniture PRO
+		</button>
 
       </div>
     </Card>
