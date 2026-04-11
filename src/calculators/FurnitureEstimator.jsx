@@ -52,11 +52,11 @@ export default function FurnitureEstimator() {
   };
 
   const format = (l, w) => {
-    const toInch = (ft) => Math.round(ft * 12);
-    return `${l}' (${toInch(l)}") × ${w}' (${toInch(w)}")`;
+    const inch = (x) => Math.round(x * 12);
+    return `${l}' (${inch(l)}") × ${w}' (${inch(w)}")`;
   };
 
-  // ================= CUT ENGINE =================
+  // ================= SMART CUT ENGINE =================
   const simulate = () => {
     let sheetsByThickness = {};
 
@@ -66,6 +66,54 @@ export default function FurnitureEstimator() {
 
     const SHEET = SHEET_SIZES[sheetType];
 
+    const tryPlace = (spaces, L, W) => {
+      let bestIndex = -1;
+      let bestScore = Infinity;
+      let bestFit = null;
+
+      spaces.forEach((s, i) => {
+        let fits = [];
+
+        if (L <= s.h && W <= s.w) {
+          fits.push({ l: L, w: W });
+        }
+        if (W <= s.h && L <= s.w) {
+          fits.push({ l: W, w: L });
+        }
+
+        fits.forEach(f => {
+          let waste = (s.w * s.h) - (f.l * f.w);
+          if (waste < bestScore) {
+            bestScore = waste;
+            bestIndex = i;
+            bestFit = f;
+          }
+        });
+      });
+
+      if (bestIndex === -1) return null;
+
+      let space = spaces[bestIndex];
+      spaces.splice(bestIndex, 1);
+
+      // Guillotine split
+      const bottom = {
+        w: space.w,
+        h: space.h - bestFit.l
+      };
+
+      const right = {
+        w: space.w - bestFit.w,
+        h: bestFit.l
+      };
+
+      if (bottom.w > 0 && bottom.h > 0) spaces.push(bottom);
+      if (right.w > 0 && right.h > 0) spaces.push(right);
+
+      return true;
+    };
+
+    // ================= PROCESS =================
     pieces.forEach((p) => {
       const L = toFeet(p.l);
       const W = toFeet(p.w);
@@ -81,67 +129,22 @@ export default function FurnitureEstimator() {
       for (let q = 0; q < qty; q++) {
         let placed = false;
 
-        for (let s = 0; s < sheetsByThickness[t].length; s++) {
-          let sheet = sheetsByThickness[t][s];
-
-          for (let i = 0; i < sheet.spaces.length; i++) {
-            let space = sheet.spaces[i];
-
-            let fitNormal = L <= space.h && W <= space.w;
-            let fitRotate = W <= space.h && L <= space.w;
-
-            if (fitNormal || fitRotate) {
-              sheet.spaces.splice(i, 1);
-
-              let cutL = fitNormal ? L : W;
-              let cutW = fitNormal ? W : L;
-
-              // LENGTH-FIRST CUT (IMPORTANT)
-              const bottom = {
-                w: space.w,
-                h: space.h - cutL
-              };
-
-              const right = {
-                w: space.w - cutW,
-                h: cutL
-              };
-
-              if (bottom.w > 0 && bottom.h > 0) sheet.spaces.push(bottom);
-              if (right.w > 0 && right.h > 0) sheet.spaces.push(right);
-
-              placed = true;
-              break;
-            }
+        // TRY EXISTING SHEETS
+        for (let sheet of sheetsByThickness[t]) {
+          let result = tryPlace(sheet.spaces, L, W);
+          if (result) {
+            placed = true;
+            break;
           }
-
-          if (placed) break;
         }
 
         // NEW SHEET
         if (!placed) {
           let newSheet = {
-            spaces: []
+            spaces: [{ w: SHEET.w, h: SHEET.h }]
           };
 
-          let base = { w: SHEET.w, h: SHEET.h };
-
-          let cutL = L;
-          let cutW = W;
-
-          const bottom = {
-            w: base.w,
-            h: base.h - cutL
-          };
-
-          const right = {
-            w: base.w - cutW,
-            h: cutL
-          };
-
-          if (bottom.w > 0 && bottom.h > 0) newSheet.spaces.push(bottom);
-          if (right.w > 0 && right.h > 0) newSheet.spaces.push(right);
-
+          tryPlace(newSheet.spaces, L, W);
           sheetsByThickness[t].push(newSheet);
         }
       }
@@ -153,17 +156,16 @@ export default function FurnitureEstimator() {
     let finalSheets = [];
 
     Object.keys(sheetsByThickness).forEach((t) => {
-      sheetsByThickness[t].forEach((sheet, index) => {
+      sheetsByThickness[t].forEach((sheet) => {
         totalSheets++;
 
-        const blocks = sheet.spaces.map((s) => {
+        let blocks = sheet.spaces.map((s) => {
           finalArea += s.w * s.h;
           return format(s.h, s.w);
         });
 
         finalSheets.push({
           thickness: t,
-          sheetNo: totalSheets,
           blocks
         });
       });
@@ -181,12 +183,10 @@ export default function FurnitureEstimator() {
 
   return (
     <Card>
-      <h3>Custom Furniture PRO (Final Engine)</h3>
+      <h3>Custom Furniture PRO (Smart Engine)</h3>
 
       {/* UNIT */}
-      <Tabs
-        value={unit}
-        onChange={setUnit}
+      <Tabs value={unit} onChange={setUnit}
         options={[
           { label: "ft", value: "ft" },
           { label: "inch", value: "inch" },
@@ -195,9 +195,7 @@ export default function FurnitureEstimator() {
       />
 
       {/* SHEET SIZE */}
-      <Tabs
-        value={sheetType}
-        onChange={setSheetType}
+      <Tabs value={sheetType} onChange={setSheetType}
         options={[
           { label: "8 × 4", value: "8x4" },
           { label: "7 × 4", value: "7x4" },
@@ -213,19 +211,21 @@ export default function FurnitureEstimator() {
         <div key={i} className="card">
           <h4>Piece {i + 1}</h4>
 
-          <Input label="Length" unit={unit} value={p.l}
+          <Input label="Length" unit={unit}
+            value={p.l}
             onChange={(v) => updatePiece(i, "l", v)} />
 
-          <Input label="Width" unit={unit} value={p.w}
+          <Input label="Width" unit={unit}
+            value={p.w}
             onChange={(v) => updatePiece(i, "w", v)} />
 
-          <Tabs
-            value={p.t}
+          <Tabs value={p.t}
             onChange={(v) => updatePiece(i, "t", v)}
             options={THICKNESS}
           />
 
-          <Input label="Quantity" value={p.qty}
+          <Input label="Quantity"
+            value={p.qty}
             onChange={(v) => updatePiece(i, "qty", v)} />
         </div>
       ))}
@@ -234,13 +234,13 @@ export default function FurnitureEstimator() {
         + Add Piece
       </button>
 
-      {/* FINAL RESULT */}
+      {/* RESULT */}
       <div className="result">
         <h4>Sheet-wise Leftover</h4>
 
         {finalSheets.map((s, i) => (
           <div key={i}>
-            <p><b>Sheet {s.sheetNo} ({s.thickness}mm)</b></p>
+            <p><b>Sheet {i + 1} ({s.thickness}mm)</b></p>
             {s.blocks.map((b, idx) => (
               <p key={idx}>• {b}</p>
             ))}
