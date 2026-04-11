@@ -36,6 +36,13 @@ export default function FurnitureEstimator() {
     setPieces([...pieces, { l: "", w: "", t: "18", qty: "1" }]);
   };
 
+  // ✅ NEW: REMOVE PIECE
+  const removePiece = (index) => {
+    if (pieces.length === 1) return; // prevent removing last
+    const updated = pieces.filter((_, i) => i !== index);
+    setPieces(updated);
+  };
+
   const updatePiece = (i, field, val) => {
     const updated = [...pieces];
     updated[i][field] = val;
@@ -74,12 +81,8 @@ export default function FurnitureEstimator() {
       spaces.forEach((s, i) => {
         let fits = [];
 
-        if (L <= s.h && W <= s.w) {
-          fits.push({ l: L, w: W });
-        }
-        if (W <= s.h && L <= s.w) {
-          fits.push({ l: W, w: L });
-        }
+        if (L <= s.h && W <= s.w) fits.push({ l: L, w: W });
+        if (W <= s.h && L <= s.w) fits.push({ l: W, w: L });
 
         fits.forEach(f => {
           let waste = (s.w * s.h) - (f.l * f.w);
@@ -96,7 +99,6 @@ export default function FurnitureEstimator() {
       let space = spaces[bestIndex];
       spaces.splice(bestIndex, 1);
 
-      // Guillotine split
       const bottom = {
         w: space.w,
         h: space.h - bestFit.l
@@ -129,16 +131,13 @@ export default function FurnitureEstimator() {
       for (let q = 0; q < qty; q++) {
         let placed = false;
 
-        // TRY EXISTING SHEETS
         for (let sheet of sheetsByThickness[t]) {
-          let result = tryPlace(sheet.spaces, L, W);
-          if (result) {
+          if (tryPlace(sheet.spaces, L, W)) {
             placed = true;
             break;
           }
         }
 
-        // NEW SHEET
         if (!placed) {
           let newSheet = {
             spaces: [{ w: SHEET.w, h: SHEET.h }]
@@ -185,7 +184,6 @@ export default function FurnitureEstimator() {
     <Card>
       <h3>Custom Furniture PRO (Smart Engine)</h3>
 
-      {/* UNIT */}
       <Tabs value={unit} onChange={setUnit}
         options={[
           { label: "ft", value: "ft" },
@@ -194,7 +192,6 @@ export default function FurnitureEstimator() {
         ]}
       />
 
-      {/* SHEET SIZE */}
       <Tabs value={sheetType} onChange={setSheetType}
         options={[
           { label: "8 × 4", value: "8x4" },
@@ -206,7 +203,6 @@ export default function FurnitureEstimator() {
         ]}
       />
 
-      {/* PIECES */}
       {pieces.map((p, i) => (
         <div key={i} className="card">
           <h4>Piece {i + 1}</h4>
@@ -227,6 +223,16 @@ export default function FurnitureEstimator() {
           <Input label="Quantity"
             value={p.qty}
             onChange={(v) => updatePiece(i, "qty", v)} />
+
+          {/* ✅ REMOVE BUTTON */}
+          {pieces.length > 1 && (
+            <button
+              className="danger"
+              onClick={() => removePiece(i)}
+            >
+              Remove Piece
+            </button>
+          )}
         </div>
       ))}
 
@@ -234,7 +240,6 @@ export default function FurnitureEstimator() {
         + Add Piece
       </button>
 
-      {/* RESULT */}
       <div className="result">
         <h4>Sheet-wise Leftover</h4>
 
@@ -250,7 +255,6 @@ export default function FurnitureEstimator() {
         <p><b>Total Leftover:</b> {finalArea.toFixed(2)} sqft</p>
       </div>
 
-      {/* COST */}
       <div className="result">
         <p>Estimated Sheets: {totalSheets}</p>
         <p>Material: ₹ {materialCost.toFixed(0)}</p>
