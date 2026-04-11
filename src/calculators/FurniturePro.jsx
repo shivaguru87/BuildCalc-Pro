@@ -86,7 +86,6 @@ function WardrobeModule() {
   // ================= CUT LIST =================
   let pieces = [];
 
-  // structure
   pieces.push({ l: H, w: D, t: 18, qty: 2 });
   pieces.push({ l: L, w: D, t: 18, qty: 2 });
 
@@ -94,7 +93,6 @@ function WardrobeModule() {
     pieces.push({ l: H, w: D, t: 18, qty: sections - 1 });
   }
 
-  // shelves
   pieces.push({
     l: sectionWidth,
     w: D,
@@ -102,10 +100,8 @@ function WardrobeModule() {
     qty: shelvesPerSection * sections
   });
 
-  // back
   pieces.push({ l: L, w: H, t: 6, qty: 1 });
 
-  // drawers
   pieces.push({
     l: sectionWidth,
     w: D / 2,
@@ -155,7 +151,6 @@ function WardrobeModule() {
     channels * rates.channel +
     handles * rates.handle;
 
-  // ================= UI =================
   return (
     <div>
       <h3>Wardrobe PRO</h3>
@@ -181,18 +176,21 @@ function WardrobeModule() {
 
       {/* SUNMICA */}
       <h4>Sunmica Options</h4>
-      {Object.keys(sunmica).map(k => (
-        <label key={k} style={{ display: "block" }}>
-          <input
-            type="checkbox"
-            checked={sunmica[k]}
-            onChange={() =>
-              setSunmica({ ...sunmica, [k]: !sunmica[k] })
-            }
-          />
-          {k}
-        </label>
-      ))}
+      <div className="sunmica-grid">
+        {Object.keys(sunmica).map((k) => (
+          <label key={k} className="sunmica-row">
+            <span className="sunmica-label">{k}</span>
+
+            <input
+              type="checkbox"
+              checked={sunmica[k]}
+              onChange={() =>
+                setSunmica({ ...sunmica, [k]: !sunmica[k] })
+              }
+            />
+          </label>
+        ))}
+      </div>
 
       {/* RATES */}
       <h4>Material Rates</h4>
@@ -224,7 +222,7 @@ function WardrobeModule() {
         <h3>Total: ₹ {totalCost.toFixed(0)}</h3>
       </div>
 
-      {/* SUGGESTIONS */}
+      {/* TIPS */}
       <div className="result">
         <h4>Smart Tips</h4>
         <p>• Use BWR ply for durability</p>
