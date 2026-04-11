@@ -3,231 +3,213 @@ import Card from "../components/Card";
 import Input from "../components/Input";
 import Tabs from "../components/Tabs";
 
+// ================= SHEET SIZES =================
+const SHEET_SIZES = {
+  "8x4": { h: 8, w: 4, area: 32 },
+  "7x4": { h: 7, w: 4, area: 28 },
+  "6x4": { h: 6, w: 4, area: 24 },
+  "8x3": { h: 8, w: 3, area: 24 },
+  "6x3": { h: 6, w: 3, area: 18 },
+  "5x5": { h: 5, w: 5, area: 25 }
+};
+
+// ================= THICKNESS =================
+const THICKNESS = ["4", "6", "9", "12", "15", "18", "25"];
+
 const DEFAULT_RATES = {
-  ply18: 2500,
-  ply12: 1800,
-  ply6: 1200,
+  "4": 1000,
+  "6": 1200,
+  "9": 1500,
+  "12": 1800,
+  "15": 2100,
+  "18": 2500,
+  "25": 3200,
   laminate: 1200,
-  fevicol: 120,
-  hinge: 80,
-  channel: 300,
-  handle: 150
+  fevicol: 120
+};
+
+// ================= CUT ENGINE =================
+const runEngine = (pieces, sheet) => {
+  let sheets = [];
+
+  const tryPlace = (spaces, L, W) => {
+    for (let i = 0; i < spaces.length; i++) {
+      let s = spaces[i];
+
+      if (L <= s.h && W <= s.w) {
+        spaces.splice(i, 1);
+
+        const bottom = { w: s.w, h: s.h - L };
+        const right = { w: s.w - W, h: L };
+
+        if (bottom.w > 0 && bottom.h > 0) spaces.push(bottom);
+        if (right.w > 0 && right.h > 0) spaces.push(right);
+
+        return true;
+      }
+    }
+    return false;
+  };
+
+  pieces.forEach(p => {
+    for (let q = 0; q < p.qty; q++) {
+      let placed = false;
+
+      for (let sheetObj of sheets) {
+        if (tryPlace(sheetObj.spaces, p.l, p.w)) {
+          placed = true;
+          break;
+        }
+      }
+
+      if (!placed) {
+        let newSheet = {
+          spaces: [{ w: sheet.w, h: sheet.h }]
+        };
+
+        tryPlace(newSheet.spaces, p.l, p.w);
+        sheets.push(newSheet);
+      }
+    }
+  });
+
+  return sheets;
 };
 
 export default function FurniturePro() {
-  const [unit, setUnit] = useState("ft");
+  const [sheetType, setSheetType] = useState("8x4");
+  const sheet = SHEET_SIZES[sheetType];
 
-  const [dims, setDims] = useState({
-    L: 6,
-    W: 2,
-    H: 7
+  const [dims, setDims] = useState({ L: 6, W: 2, H: 7 });
+
+  const [layout, setLayout] = useState({
+    hanging: 3.5,
+    drawerH: 0.5,
+    drawers: 2,
+    shelves: 3,
+    skirting: 0.25
   });
 
   const [rates, setRates] = useState(DEFAULT_RATES);
 
-  const [sunmica, setSunmica] = useState({
-    inside: true,
-    outside: true,
-    left: true,
-    right: true,
-    top: true,
-    bottom: false,
-    back: false
-  });
-
-  const [layout, setLayout] = useState({
-    hangingHeight: 3.5,
-    drawerHeight: 0.5,
-    drawerCount: 2,
-    shelfCount: 3,
-    skirting: 0.25
-  });
-
-  // ================= UNIT =================
-  const toFeet = (v) => {
-    if (unit === "ft") return Number(v);
-    if (unit === "inch") return Number(v) / 12;
-    if (unit === "mm") return Number(v) / 304.8;
-  };
-
-  const L = toFeet(dims.L);
-  const D = toFeet(dims.W);
-  const H = toFeet(dims.H);
-
-  // ================= HEIGHT LOGIC =================
-  const totalDrawerHeight = layout.drawerHeight * layout.drawerCount;
-  const usedHeight =
-    layout.hangingHeight +
-    totalDrawerHeight +
+  // ================= HEIGHT =================
+  const used =
+    layout.hanging +
+    layout.drawerH * layout.drawers +
     layout.skirting;
 
-  const remainingHeight = H - usedHeight;
-
-  const shelfGap =
-    layout.shelfCount > 0
-      ? remainingHeight / (layout.shelfCount + 1)
-      : 0;
+  const remaining = dims.H - used;
+  const gap = remaining / (layout.shelves + 1);
 
   // ================= CUT LIST =================
-  let pieces = [];
+  const pieces = [
+    { l: dims.H, w: dims.W, t: "18", qty: 2 },
+    { l: dims.L, w: dims.W, t: "18", qty: 2 },
+    { l: dims.L, w: dims.W, t: "18", qty: layout.shelves },
+    { l: dims.L, w: dims.W / 2, t: "12", qty: layout.drawers },
+    { l: dims.L, w: dims.H, t: "6", qty: 1 }
+  ];
 
-  // structure
-  pieces.push({ l: H, w: D, t: 18, qty: 2 });
-  pieces.push({ l: L, w: D, t: 18, qty: 2 });
-
-  // shelves
-  pieces.push({
-    l: L,
-    w: D,
-    t: 18,
-    qty: layout.shelfCount
+  // ================= GROUP BY THICKNESS =================
+  let grouped = {};
+  pieces.forEach(p => {
+    if (!grouped[p.t]) grouped[p.t] = [];
+    grouped[p.t].push(p);
   });
 
-  // drawers
-  pieces.push({
-    l: L,
-    w: D / 2,
-    t: 12,
-    qty: layout.drawerCount
+  let results = {};
+  let totalCost = 0;
+  let totalWaste = 0;
+
+  Object.keys(grouped).forEach(t => {
+    const sheets = runEngine(grouped[t], sheet);
+
+    let waste = 0;
+    sheets.forEach(s =>
+      s.spaces.forEach(sp => {
+        waste += sp.w * sp.h;
+      })
+    );
+
+    results[t] = {
+      count: sheets.length,
+      sheets,
+      waste
+    };
+
+    totalWaste += waste;
+    totalCost += sheets.length * (rates[t] || 0);
   });
-
-  // back
-  pieces.push({ l: L, w: H, t: 6, qty: 1 });
-
-  // ================= AREA =================
-  const calcArea = (t) =>
-    pieces
-      .filter(p => p.t === t)
-      .reduce((sum, p) => sum + p.l * p.w * p.qty, 0);
-
-  const area18 = calcArea(18);
-  const area12 = calcArea(12);
-  const area6 = calcArea(6);
-
-  // ================= SHEETS =================
-  const sheets18 = Math.ceil(area18 / 32);
-  const sheets12 = Math.ceil(area12 / 32);
-  const sheets6 = Math.ceil(area6 / 32);
-
-  // ================= LAMINATE =================
-  let laminateArea = 0;
-
-  if (sunmica.inside) laminateArea += area18;
-  if (sunmica.outside) laminateArea += L * H;
-
-  const laminateSheets = Math.ceil(laminateArea / 32);
-
-  // ================= HARDWARE =================
-  const hinges = 4;
-  const channels = layout.drawerCount;
-  const handles = layout.drawerCount + 2;
-
-  // ================= FEVICOL =================
-  const fevicolKg = Math.ceil(
-    (sheets18 + sheets12 + sheets6) / 2
-  );
-
-  // ================= COST =================
-  const totalCost =
-    sheets18 * rates.ply18 +
-    sheets12 * rates.ply12 +
-    sheets6 * rates.ply6 +
-    laminateSheets * rates.laminate +
-    fevicolKg * rates.fevicol +
-    hinges * rates.hinge +
-    channels * rates.channel +
-    handles * rates.handle;
 
   return (
     <Card>
-      <h2>Furniture PRO (Advanced Wardrobe)</h2>
+      <h2>Furniture PRO (Ultimate)</h2>
 
+      {/* SHEET SELECT */}
       <Tabs
-        value={unit}
-        onChange={setUnit}
-        options={[
-          { label: "ft", value: "ft" },
-          { label: "inch", value: "inch" },
-          { label: "mm", value: "mm" }
-        ]}
+        value={sheetType}
+        onChange={setSheetType}
+        options={Object.keys(SHEET_SIZES).map(s => ({
+          label: s,
+          value: s
+        }))}
       />
 
       {/* DIMENSIONS */}
       <Input label="Length" value={dims.L}
-        onChange={(v) => setDims({ ...dims, L: v })} />
+        onChange={v => setDims({ ...dims, L: Number(v) })} />
       <Input label="Depth" value={dims.W}
-        onChange={(v) => setDims({ ...dims, W: v })} />
+        onChange={v => setDims({ ...dims, W: Number(v) })} />
       <Input label="Height" value={dims.H}
-        onChange={(v) => setDims({ ...dims, H: v })} />
+        onChange={v => setDims({ ...dims, H: Number(v) })} />
 
       {/* LAYOUT */}
       <h4>Layout</h4>
-      <Input label="Hanging Height"
-        value={layout.hangingHeight}
-        onChange={(v) =>
-          setLayout({ ...layout, hangingHeight: Number(v) })
-        } />
-
-      <Input label="Drawer Count"
-        value={layout.drawerCount}
-        onChange={(v) =>
-          setLayout({ ...layout, drawerCount: Number(v) })
-        } />
-
-      <Input label="Drawer Height"
-        value={layout.drawerHeight}
-        onChange={(v) =>
-          setLayout({ ...layout, drawerHeight: Number(v) })
-        } />
-
-      <Input label="Shelf Count"
-        value={layout.shelfCount}
-        onChange={(v) =>
-          setLayout({ ...layout, shelfCount: Number(v) })
-        } />
-
-      <Input label="Skirting"
-        value={layout.skirting}
-        onChange={(v) =>
-          setLayout({ ...layout, skirting: Number(v) })
-        } />
-
-      {/* SUNMICA */}
-      <h4>Sunmica Options</h4>
-      <div className="sunmica-grid">
-        {Object.keys(sunmica).map((k) => (
-          <label key={k} className="sunmica-row">
-            <span className="sunmica-label">{k}</span>
-            <input
-              type="checkbox"
-              checked={sunmica[k]}
-              onChange={() =>
-                setSunmica({ ...sunmica, [k]: !sunmica[k] })
-              }
-            />
-          </label>
-        ))}
-      </div>
+      <Input label="Hanging Height" value={layout.hanging}
+        onChange={v => setLayout({ ...layout, hanging: Number(v) })} />
+      <Input label="Drawer Count" value={layout.drawers}
+        onChange={v => setLayout({ ...layout, drawers: Number(v) })} />
+      <Input label="Drawer Height" value={layout.drawerH}
+        onChange={v => setLayout({ ...layout, drawerH: Number(v) })} />
+      <Input label="Shelf Count" value={layout.shelves}
+        onChange={v => setLayout({ ...layout, shelves: Number(v) })} />
 
       {/* RESULT */}
       <div className="result">
-        <h4>Layout Result</h4>
-        <p>Remaining Height: {remainingHeight.toFixed(2)} ft</p>
-        <p>Shelf Gap: {shelfGap.toFixed(2)} ft</p>
+        <h4>Layout</h4>
+        <p>Remaining: {remaining.toFixed(2)} ft</p>
+        <p>Gap: {gap.toFixed(2)} ft</p>
 
-        <h4>Material</h4>
-        <p>18mm Ply: {sheets18}</p>
-        <p>12mm Ply: {sheets12}</p>
-        <p>6mm Ply: {sheets6}</p>
-        <p>Laminate: {laminateSheets}</p>
-        <p>Fevicol: {fevicolKg} kg</p>
+        <h4>Sheet-wise Result</h4>
 
-        <h4>Hardware</h4>
-        <p>Hinges: {hinges}</p>
-        <p>Channels: {channels}</p>
-        <p>Handles: {handles}</p>
+        {Object.keys(results).map(t => (
+          <div key={t}>
+            <p><b>{t}mm Ply → {results[t].count} sheets</b></p>
 
-        <h3>Total: ₹ {totalCost.toFixed(0)}</h3>
+            {results[t].sheets.map((s, i) => (
+              <div key={i}>
+                <p>Sheet {i + 1}</p>
+                {s.spaces.map((sp, idx) => (
+                  <p key={idx}>
+                    • {sp.h.toFixed(2)} × {sp.w.toFixed(2)}
+                  </p>
+                ))}
+              </div>
+            ))}
+          </div>
+        ))}
+
+        <p>Total Waste: {totalWaste.toFixed(2)} sqft</p>
+
+        <h3>Total Cost: ₹ {totalCost.toFixed(0)}</h3>
+      </div>
+
+      {/* TIPS */}
+      <div className="result">
+        <h4>Smart Tips</h4>
+        <p>• Use 6×4 sheets for shelves to reduce waste</p>
+        <p>• Reduce drawers to save cost</p>
+        <p>• Use 18mm for strength</p>
       </div>
     </Card>
   );
