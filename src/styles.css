@@ -241,3 +241,19 @@ button.ghost {
   margin-top: 6px;
   margin-bottom: 8px;
 }
+
+.sunmica-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sunmica-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sunmica-label {
+  text-transform: capitalize;
+}
