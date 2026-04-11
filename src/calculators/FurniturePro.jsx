@@ -3,7 +3,6 @@ import Card from "../components/Card";
 import Input from "../components/Input";
 import Tabs from "../components/Tabs";
 
-// ================= DEFAULT RATES =================
 const DEFAULT_RATES = {
   ply18: 2500,
   ply12: 1800,
@@ -16,29 +15,6 @@ const DEFAULT_RATES = {
 };
 
 export default function FurniturePro() {
-  const [tab, setTab] = useState("wardrobe");
-
-  return (
-    <Card>
-      <h2>Furniture PRO</h2>
-
-      <Tabs
-        value={tab}
-        onChange={setTab}
-        options={[
-          { label: "Wardrobe", value: "wardrobe" },
-          { label: "Bed (soon)", value: "bed" },
-          { label: "Office (soon)", value: "office" }
-        ]}
-      />
-
-      {tab === "wardrobe" && <WardrobeModule />}
-    </Card>
-  );
-}
-
-// ================= WARDROBE =================
-function WardrobeModule() {
   const [unit, setUnit] = useState("ft");
 
   const [dims, setDims] = useState({
@@ -49,24 +25,16 @@ function WardrobeModule() {
 
   const [rates, setRates] = useState(DEFAULT_RATES);
 
-  const [sunmica, setSunmica] = useState({
-    inside: true,
-    outside: true,
-    left: true,
-    right: true,
-    top: true,
-    bottom: false,
-    back: false
-  });
-
-  // ================= AUTO + EDITABLE LAYOUT =================
-  const autoSections = dims.L <= 5 ? 1 : dims.L <= 8 ? 2 : 3;
-
   const [layout, setLayout] = useState({
-    sections: autoSections,
-    shelves: 4,
-    drawers: 2,
-    hangingHeight: 3.5
+    hangingHeight: 3.5,
+    hangingFrom: "top", // top or bottom
+
+    drawerHeight: 0.5, // 6 inch
+    drawerCount: 2,
+    drawerFrom: "bottom",
+
+    shelfCount: 3,
+    skirting: 0.25 // 3 inch
   });
 
   // ================= UNIT =================
@@ -80,7 +48,27 @@ function WardrobeModule() {
   const D = toFeet(dims.W);
   const H = toFeet(dims.H);
 
-  const sectionWidth = L / layout.sections;
+  // ================= HEIGHT BREAKDOWN =================
+  let usedHeight = 0;
+
+  // Hanging
+  usedHeight += layout.hangingHeight;
+
+  // Drawers
+  const totalDrawerHeight = layout.drawerHeight * layout.drawerCount;
+  usedHeight += totalDrawerHeight;
+
+  // Skirting
+  usedHeight += layout.skirting;
+
+  // Remaining for shelves
+  const remainingHeight = H - usedHeight;
+
+  // Shelf gap auto
+  const shelfGap =
+    layout.shelfCount > 0
+      ? remainingHeight / (layout.shelfCount + 1)
+      : 0;
 
   // ================= CUT LIST =================
   let pieces = [];
@@ -89,24 +77,20 @@ function WardrobeModule() {
   pieces.push({ l: H, w: D, t: 18, qty: 2 });
   pieces.push({ l: L, w: D, t: 18, qty: 2 });
 
-  if (layout.sections > 1) {
-    pieces.push({ l: H, w: D, t: 18, qty: layout.sections - 1 });
-  }
-
   // shelves
   pieces.push({
-    l: sectionWidth,
+    l: L,
     w: D,
     t: 18,
-    qty: layout.shelves * layout.sections
+    qty: layout.shelfCount
   });
 
   // drawers
   pieces.push({
-    l: sectionWidth,
+    l: L,
     w: D / 2,
     t: 12,
-    qty: layout.drawers * layout.sections
+    qty: layout.drawerCount
   });
 
   // back
@@ -127,36 +111,15 @@ function WardrobeModule() {
   const sheets12 = Math.ceil(area12 / 32);
   const sheets6 = Math.ceil(area6 / 32);
 
-  // ================= LAMINATE =================
-  let laminateArea = 0;
-
-  if (sunmica.inside) laminateArea += area18;
-  if (sunmica.outside) laminateArea += L * H;
-
-  const laminateSheets = Math.ceil(laminateArea / 32);
-
-  // ================= HARDWARE =================
-  const hinges = layout.sections * 4;
-  const channels = layout.drawers * layout.sections;
-  const handles = layout.sections + channels;
-
-  // ================= FEVICOL =================
-  const fevicolKg = Math.ceil((sheets18 + sheets12 + sheets6) / 2);
-
   // ================= COST =================
   const totalCost =
     sheets18 * rates.ply18 +
     sheets12 * rates.ply12 +
-    sheets6 * rates.ply6 +
-    laminateSheets * rates.laminate +
-    fevicolKg * rates.fevicol +
-    hinges * rates.hinge +
-    channels * rates.channel +
-    handles * rates.handle;
+    sheets6 * rates.ply6;
 
   return (
-    <div>
-      <h3>Wardrobe PRO</h3>
+    <Card>
+      <h2>Furniture PRO (Advanced Wardrobe)</h2>
 
       {/* UNIT */}
       <Tabs
@@ -177,79 +140,80 @@ function WardrobeModule() {
       <Input label="Height" value={dims.H}
         onChange={(v) => setDims({ ...dims, H: v })} />
 
-      {/* LAYOUT */}
-      <h4>Layout (Editable)</h4>
-      <Input label="Sections"
-        value={layout.sections}
-        onChange={(v) => setLayout({ ...layout, sections: Number(v) })} />
-
-      <Input label="Shelves per Section"
-        value={layout.shelves}
-        onChange={(v) => setLayout({ ...layout, shelves: Number(v) })} />
-
-      <Input label="Drawers per Section"
-        value={layout.drawers}
-        onChange={(v) => setLayout({ ...layout, drawers: Number(v) })} />
-
-      <Input label="Hanging Space Height (ft)"
+      {/* HANGING */}
+      <h4>Clothing Hanging</h4>
+      <Input label="Height (ft)"
         value={layout.hangingHeight}
-        onChange={(v) => setLayout({ ...layout, hangingHeight: Number(v) })} />
+        onChange={(v) =>
+          setLayout({ ...layout, hangingHeight: Number(v) })
+        } />
 
-      {/* SUNMICA */}
-      <h4>Sunmica Options</h4>
-      <div className="sunmica-grid">
-        {Object.keys(sunmica).map((k) => (
-          <label key={k} className="sunmica-row">
-            <span className="sunmica-label">{k}</span>
-            <input
-              type="checkbox"
-              checked={sunmica[k]}
-              onChange={() =>
-                setSunmica({ ...sunmica, [k]: !sunmica[k] })
-              }
-            />
-          </label>
-        ))}
-      </div>
+      <Tabs
+        value={layout.hangingFrom}
+        onChange={(v) =>
+          setLayout({ ...layout, hangingFrom: v })
+        }
+        options={[
+          { label: "Top", value: "top" },
+          { label: "Bottom", value: "bottom" }
+        ]}
+      />
 
-      {/* RATES */}
-      <h4>Material Rates</h4>
-      {Object.keys(rates).map(k => (
-        <Input
-          key={k}
-          label={k}
-          value={rates[k]}
-          onChange={(v) =>
-            setRates({ ...rates, [k]: Number(v) })
-          }
-        />
-      ))}
+      {/* DRAWERS */}
+      <h4>Drawers</h4>
+      <Input label="Drawer Count"
+        value={layout.drawerCount}
+        onChange={(v) =>
+          setLayout({ ...layout, drawerCount: Number(v) })
+        } />
+
+      <Input label="Drawer Height (ft)"
+        value={layout.drawerHeight}
+        onChange={(v) =>
+          setLayout({ ...layout, drawerHeight: Number(v) })
+        } />
+
+      <Tabs
+        value={layout.drawerFrom}
+        onChange={(v) =>
+          setLayout({ ...layout, drawerFrom: v })
+        }
+        options={[
+          { label: "Bottom", value: "bottom" },
+          { label: "Top", value: "top" }
+        ]}
+      />
+
+      {/* SKIRTING */}
+      <h4>Skirting</h4>
+      <Input label="Skirting Height (ft)"
+        value={layout.skirting}
+        onChange={(v) =>
+          setLayout({ ...layout, skirting: Number(v) })
+        } />
+
+      {/* SHELVES */}
+      <h4>Shelves</h4>
+      <Input label="Shelf Count"
+        value={layout.shelfCount}
+        onChange={(v) =>
+          setLayout({ ...layout, shelfCount: Number(v) })
+        } />
 
       {/* RESULT */}
       <div className="result">
-        <h4>Material Required</h4>
+        <h4>Layout Result</h4>
+
+        <p>Remaining Height: {remainingHeight.toFixed(2)} ft</p>
+        <p>Auto Shelf Gap: {shelfGap.toFixed(2)} ft</p>
+
+        <h4>Material</h4>
         <p>18mm Ply: {sheets18}</p>
         <p>12mm Ply: {sheets12}</p>
         <p>6mm Ply: {sheets6}</p>
-        <p>Laminate: {laminateSheets}</p>
-        <p>Fevicol: {fevicolKg} kg</p>
-
-        <h4>Hardware</h4>
-        <p>Hinges: {hinges}</p>
-        <p>Channels: {channels}</p>
-        <p>Handles: {handles}</p>
 
         <h3>Total: ₹ {totalCost.toFixed(0)}</h3>
       </div>
-
-      {/* TIPS */}
-      <div className="result">
-        <h4>Smart Tips</h4>
-        <p>• Use BWR ply for durability</p>
-        <p>• Keep shelf spacing ~1.5ft</p>
-        <p>• Reduce drawers to save cost</p>
-        <p>• Laminate inside only for budget</p>
-      </div>
-    </div>
+    </Card>
   );
 }
