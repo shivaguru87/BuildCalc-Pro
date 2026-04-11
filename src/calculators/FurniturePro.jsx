@@ -59,14 +59,13 @@ function WardrobeModule() {
     back: false
   });
 
-  // ================= AUTO + EDITABLE LAYOUT =================
-  const autoSections = dims.L <= 5 ? 1 : dims.L <= 8 ? 2 : 3;
-
+  // ================= NEW HEIGHT-BASED LAYOUT =================
   const [layout, setLayout] = useState({
-    sections: autoSections,
-    shelves: 4,
-    drawers: 2,
-    hangingHeight: 3.5
+    hangingHeight: 3.5,
+    drawerHeight: 0.5,
+    drawerCount: 2,
+    shelfCount: 4,
+    skirting: 0.25
   });
 
   // ================= UNIT =================
@@ -80,7 +79,20 @@ function WardrobeModule() {
   const D = toFeet(dims.W);
   const H = toFeet(dims.H);
 
-  const sectionWidth = L / layout.sections;
+  // ================= HEIGHT BREAKDOWN =================
+  const drawerTotal = layout.drawerHeight * layout.drawerCount;
+
+  const usedHeight =
+    layout.hangingHeight +
+    drawerTotal +
+    layout.skirting;
+
+  const remainingHeight = H - usedHeight;
+
+  const shelfGap =
+    layout.shelfCount > 0
+      ? remainingHeight / (layout.shelfCount + 1)
+      : 0;
 
   // ================= CUT LIST =================
   let pieces = [];
@@ -89,24 +101,20 @@ function WardrobeModule() {
   pieces.push({ l: H, w: D, t: 18, qty: 2 });
   pieces.push({ l: L, w: D, t: 18, qty: 2 });
 
-  if (layout.sections > 1) {
-    pieces.push({ l: H, w: D, t: 18, qty: layout.sections - 1 });
-  }
-
   // shelves
   pieces.push({
-    l: sectionWidth,
+    l: L,
     w: D,
     t: 18,
-    qty: layout.shelves * layout.sections
+    qty: layout.shelfCount
   });
 
   // drawers
   pieces.push({
-    l: sectionWidth,
+    l: L,
     w: D / 2,
     t: 12,
-    qty: layout.drawers * layout.sections
+    qty: layout.drawerCount
   });
 
   // back
@@ -136,9 +144,9 @@ function WardrobeModule() {
   const laminateSheets = Math.ceil(laminateArea / 32);
 
   // ================= HARDWARE =================
-  const hinges = layout.sections * 4;
-  const channels = layout.drawers * layout.sections;
-  const handles = layout.sections + channels;
+  const hinges = 4;
+  const channels = layout.drawerCount;
+  const handles = layout.drawerCount + 2;
 
   // ================= FEVICOL =================
   const fevicolKg = Math.ceil((sheets18 + sheets12 + sheets6) / 2);
@@ -177,23 +185,45 @@ function WardrobeModule() {
       <Input label="Height" value={dims.H}
         onChange={(v) => setDims({ ...dims, H: v })} />
 
-      {/* LAYOUT */}
+      {/* NEW LAYOUT */}
       <h4>Layout (Editable)</h4>
-      <Input label="Sections"
-        value={layout.sections}
-        onChange={(v) => setLayout({ ...layout, sections: Number(v) })} />
 
-      <Input label="Shelves per Section"
-        value={layout.shelves}
-        onChange={(v) => setLayout({ ...layout, shelves: Number(v) })} />
-
-      <Input label="Drawers per Section"
-        value={layout.drawers}
-        onChange={(v) => setLayout({ ...layout, drawers: Number(v) })} />
-
-      <Input label="Hanging Space Height (ft)"
+      <Input label="Hanging Height (ft)"
         value={layout.hangingHeight}
-        onChange={(v) => setLayout({ ...layout, hangingHeight: Number(v) })} />
+        onChange={(v) =>
+          setLayout({ ...layout, hangingHeight: Number(v) })
+        } />
+
+      <Input label="Drawer Count"
+        value={layout.drawerCount}
+        onChange={(v) =>
+          setLayout({ ...layout, drawerCount: Number(v) })
+        } />
+
+      <Input label="Drawer Height (ft)"
+        value={layout.drawerHeight}
+        onChange={(v) =>
+          setLayout({ ...layout, drawerHeight: Number(v) })
+        } />
+
+      <Input label="Shelf Count"
+        value={layout.shelfCount}
+        onChange={(v) =>
+          setLayout({ ...layout, shelfCount: Number(v) })
+        } />
+
+      <Input label="Skirting Height (ft)"
+        value={layout.skirting}
+        onChange={(v) =>
+          setLayout({ ...layout, skirting: Number(v) })
+        } />
+
+      {/* RESULT ADDITION */}
+      <div className="result">
+        <h4>Layout Result</h4>
+        <p>Remaining Height: {remainingHeight.toFixed(2)} ft</p>
+        <p>Shelf Gap: {shelfGap.toFixed(2)} ft</p>
+      </div>
 
       {/* SUNMICA */}
       <h4>Sunmica Options</h4>
@@ -246,9 +276,9 @@ function WardrobeModule() {
       <div className="result">
         <h4>Smart Tips</h4>
         <p>• Use BWR ply for durability</p>
-        <p>• Keep shelf spacing ~1.5ft</p>
+        <p>• Keep shelf gap between 1–1.5 ft</p>
         <p>• Reduce drawers to save cost</p>
-        <p>• Laminate inside only for budget</p>
+        <p>• Adjust hanging height based on clothes</p>
       </div>
     </div>
   );
