@@ -73,8 +73,6 @@ export default function FurniturePro() {
     H: 7
   });
 
-  const [rates] = useState(DEFAULT_RATES);
-
   const [layout, setLayout] = useState({
     hangingHeight: 3.5,
     hangingFrom: "top",
@@ -102,24 +100,20 @@ export default function FurniturePro() {
   let topUsed = 0;
   let bottomUsed = 0;
 
-  // Hanging
   if (layout.hangingFrom === "top") {
     topUsed += layout.hangingHeight;
   } else {
     bottomUsed += layout.hangingHeight;
   }
 
-  // Drawers
   if (layout.drawerFrom === "bottom") {
     bottomUsed += drawerTotal;
   } else {
     topUsed += drawerTotal;
   }
 
-  // Skirting
   bottomUsed += layout.skirting;
 
-  // Remaining space for shelves
   const remainingHeight = H - (topUsed + bottomUsed);
 
   const shelfGap =
@@ -136,7 +130,6 @@ export default function FurniturePro() {
     { l: L, w: H, t: "6", qty: 1 }
   ];
 
-  // ================= ENGINE =================
   const result = runCutEngine(pieces);
 
   const sheets18 = result["18"]?.length || 0;
@@ -152,18 +145,95 @@ export default function FurniturePro() {
     )
   );
 
-  // ================= COST =================
   const totalCost =
-    sheets18 * rates.ply18 +
-    sheets12 * rates.ply12 +
-    sheets6 * rates.ply6;
+    sheets18 * DEFAULT_RATES.ply18 +
+    sheets12 * DEFAULT_RATES.ply12 +
+    sheets6 * DEFAULT_RATES.ply6;
 
   return (
     <Card>
-      <h2>Furniture PRO (Final Correct)</h2>
+      <h2>Furniture PRO</h2>
 
-      {/* KEEP YOUR ORIGINAL UI */}
+      {/* UNIT */}
+      <Tabs
+        value={unit}
+        onChange={setUnit}
+        options={[
+          { label: "ft", value: "ft" },
+          { label: "inch", value: "inch" },
+          { label: "mm", value: "mm" }
+        ]}
+      />
 
+      {/* DIMENSIONS */}
+      <Input label="Length" value={dims.L}
+        onChange={(v) => setDims({ ...dims, L: v })} />
+      <Input label="Depth" value={dims.W}
+        onChange={(v) => setDims({ ...dims, W: v })} />
+      <Input label="Height" value={dims.H}
+        onChange={(v) => setDims({ ...dims, H: v })} />
+
+      {/* HANGING */}
+      <h4>Clothing Hanging</h4>
+      <Input label="Height (ft)"
+        value={layout.hangingHeight}
+        onChange={(v) =>
+          setLayout({ ...layout, hangingHeight: Number(v) })
+        } />
+
+      <Tabs
+        value={layout.hangingFrom}
+        onChange={(v) =>
+          setLayout({ ...layout, hangingFrom: v })
+        }
+        options={[
+          { label: "Top", value: "top" },
+          { label: "Bottom", value: "bottom" }
+        ]}
+      />
+
+      {/* DRAWERS */}
+      <h4>Drawers</h4>
+      <Input label="Drawer Count"
+        value={layout.drawerCount}
+        onChange={(v) =>
+          setLayout({ ...layout, drawerCount: Number(v) })
+        } />
+
+      <Input label="Drawer Height (ft)"
+        value={layout.drawerHeight}
+        onChange={(v) =>
+          setLayout({ ...layout, drawerHeight: Number(v) })
+        } />
+
+      <Tabs
+        value={layout.drawerFrom}
+        onChange={(v) =>
+          setLayout({ ...layout, drawerFrom: v })
+        }
+        options={[
+          { label: "Bottom", value: "bottom" },
+          { label: "Top", value: "top" }
+        ]}
+      />
+
+      {/* SKIRTING */}
+      <h4>Skirting</h4>
+      <Input label="Skirting Height (ft)"
+        value={layout.skirting}
+        onChange={(v) =>
+          setLayout({ ...layout, skirting: Number(v) })
+        } />
+
+      {/* SHELVES */}
+      <h4>Shelves</h4>
+      <Input label="Shelf Count"
+        value={layout.shelfCount}
+        onChange={(v) =>
+          setLayout({ ...layout, shelfCount: Number(v) })
+        } />
+
+      {/* RESULT */}
       <div className="result">
         <h4>Layout Result</h4>
         <p>Remaining Height: {remainingHeight.toFixed(2)} ft</p>
@@ -177,14 +247,12 @@ export default function FurniturePro() {
         <h4>Sheet-wise Leftover</h4>
         {Object.keys(result).map((t) => (
           <div key={t}>
-            <p><b>{t}mm</b></p>
+            <b>{t}mm</b>
             {result[t].map((sheet, i) => (
               <div key={i}>
-                <p>Sheet {i + 1}</p>
+                Sheet {i + 1}
                 {sheet.spaces.map((s, idx) => (
-                  <p key={idx}>
-                    • {s.h.toFixed(2)} × {s.w.toFixed(2)}
-                  </p>
+                  <p key={idx}>• {s.h.toFixed(2)} × {s.w.toFixed(2)}</p>
                 ))}
               </div>
             ))}
@@ -194,14 +262,6 @@ export default function FurniturePro() {
         <p>Waste: {waste.toFixed(2)} sqft</p>
 
         <h3>Total: ₹ {totalCost.toFixed(0)}</h3>
-      </div>
-
-      <div className="result">
-        <h4>Smart Tips</h4>
-        <p>• Use BWR ply for durability</p>
-        <p>• Place drawers at bottom for stability</p>
-        <p>• Keep shelf gap 1.2–1.6 ft</p>
-        <p>• Use leftover pieces efficiently</p>
       </div>
     </Card>
   );
