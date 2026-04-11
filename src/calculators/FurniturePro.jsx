@@ -3,12 +3,6 @@ import Card from "../components/Card";
 import Input from "../components/Input";
 import Tabs from "../components/Tabs";
 
-// ================= SHEETS =================
-const SHEETS = {
-  "8x4": { area: 32 },
-  "6x4": { area: 24 }
-};
-
 // ================= DEFAULT RATES =================
 const DEFAULT_RATES = {
   ply18: 2500,
@@ -43,7 +37,7 @@ export default function FurniturePro() {
   );
 }
 
-// ================= WARDROBE MODULE =================
+// ================= WARDROBE =================
 function WardrobeModule() {
   const [unit, setUnit] = useState("ft");
 
@@ -65,6 +59,16 @@ function WardrobeModule() {
     back: false
   });
 
+  // ================= AUTO + EDITABLE LAYOUT =================
+  const autoSections = dims.L <= 5 ? 1 : dims.L <= 8 ? 2 : 3;
+
+  const [layout, setLayout] = useState({
+    sections: autoSections,
+    shelves: 4,
+    drawers: 2,
+    hangingHeight: 3.5
+  });
+
   // ================= UNIT =================
   const toFeet = (v) => {
     if (unit === "ft") return Number(v);
@@ -76,38 +80,37 @@ function WardrobeModule() {
   const D = toFeet(dims.W);
   const H = toFeet(dims.H);
 
-  // ================= AUTO DESIGN =================
-  const sections = L <= 5 ? 1 : L <= 8 ? 2 : 3;
-  const sectionWidth = L / sections;
-
-  const shelvesPerSection = Math.floor(H / 1.5);
-  const drawersPerSection = 2;
+  const sectionWidth = L / layout.sections;
 
   // ================= CUT LIST =================
   let pieces = [];
 
+  // structure
   pieces.push({ l: H, w: D, t: 18, qty: 2 });
   pieces.push({ l: L, w: D, t: 18, qty: 2 });
 
-  if (sections > 1) {
-    pieces.push({ l: H, w: D, t: 18, qty: sections - 1 });
+  if (layout.sections > 1) {
+    pieces.push({ l: H, w: D, t: 18, qty: layout.sections - 1 });
   }
 
+  // shelves
   pieces.push({
     l: sectionWidth,
     w: D,
     t: 18,
-    qty: shelvesPerSection * sections
+    qty: layout.shelves * layout.sections
   });
 
-  pieces.push({ l: L, w: H, t: 6, qty: 1 });
-
+  // drawers
   pieces.push({
     l: sectionWidth,
     w: D / 2,
     t: 12,
-    qty: drawersPerSection * sections
+    qty: layout.drawers * layout.sections
   });
+
+  // back
+  pieces.push({ l: L, w: H, t: 6, qty: 1 });
 
   // ================= AREA =================
   const calcArea = (t) =>
@@ -133,9 +136,9 @@ function WardrobeModule() {
   const laminateSheets = Math.ceil(laminateArea / 32);
 
   // ================= HARDWARE =================
-  const hinges = sections * 4;
-  const channels = drawersPerSection * sections;
-  const handles = sections + channels;
+  const hinges = layout.sections * 4;
+  const channels = layout.drawers * layout.sections;
+  const handles = layout.sections + channels;
 
   // ================= FEVICOL =================
   const fevicolKg = Math.ceil((sheets18 + sheets12 + sheets6) / 2);
@@ -174,13 +177,30 @@ function WardrobeModule() {
       <Input label="Height" value={dims.H}
         onChange={(v) => setDims({ ...dims, H: v })} />
 
+      {/* LAYOUT */}
+      <h4>Layout (Editable)</h4>
+      <Input label="Sections"
+        value={layout.sections}
+        onChange={(v) => setLayout({ ...layout, sections: Number(v) })} />
+
+      <Input label="Shelves per Section"
+        value={layout.shelves}
+        onChange={(v) => setLayout({ ...layout, shelves: Number(v) })} />
+
+      <Input label="Drawers per Section"
+        value={layout.drawers}
+        onChange={(v) => setLayout({ ...layout, drawers: Number(v) })} />
+
+      <Input label="Hanging Space Height (ft)"
+        value={layout.hangingHeight}
+        onChange={(v) => setLayout({ ...layout, hangingHeight: Number(v) })} />
+
       {/* SUNMICA */}
       <h4>Sunmica Options</h4>
       <div className="sunmica-grid">
         {Object.keys(sunmica).map((k) => (
           <label key={k} className="sunmica-row">
             <span className="sunmica-label">{k}</span>
-
             <input
               type="checkbox"
               checked={sunmica[k]}
@@ -226,9 +246,9 @@ function WardrobeModule() {
       <div className="result">
         <h4>Smart Tips</h4>
         <p>• Use BWR ply for durability</p>
+        <p>• Keep shelf spacing ~1.5ft</p>
         <p>• Reduce drawers to save cost</p>
-        <p>• Use laminate inside only for budget</p>
-        <p>• Keep shelf span ≤ 18 inch</p>
+        <p>• Laminate inside only for budget</p>
       </div>
     </div>
   );
