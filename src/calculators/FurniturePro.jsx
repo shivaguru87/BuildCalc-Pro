@@ -3,12 +3,6 @@ import Card from "../components/Card";
 import Input from "../components/Input";
 import Tabs from "../components/Tabs";
 
-// ================= SHEET SIZES =================
-const SHEETS = {
-  "8x4": { w: 4, h: 8, area: 32 },
-  "6x4": { w: 4, h: 6, area: 24 }
-};
-
 const DEFAULT_RATES = {
   ply18: 2500,
   ply12: 1800,
@@ -21,7 +15,9 @@ const DEFAULT_RATES = {
 };
 
 // ================= REAL CUT ENGINE =================
-const runCutEngine = (pieces, sheet) => {
+const SHEET = { w: 4, h: 8 };
+
+const runCutEngine = (pieces) => {
   let sheetsByT = {};
 
   const tryPlace = (spaces, L, W) => {
@@ -57,17 +53,15 @@ const runCutEngine = (pieces, sheet) => {
     for (let q = 0; q < qty; q++) {
       let placed = false;
 
-      for (let sheetObj of sheetsByT[t]) {
-        if (tryPlace(sheetObj.spaces, l, w)) {
+      for (let sheet of sheetsByT[t]) {
+        if (tryPlace(sheet.spaces, l, w)) {
           placed = true;
           break;
         }
       }
 
       if (!placed) {
-        let newSheet = {
-          spaces: [{ w: sheet.w, h: sheet.h }]
-        };
+        let newSheet = { spaces: [{ w: SHEET.w, h: SHEET.h }] };
         tryPlace(newSheet.spaces, l, w);
         sheetsByT[t].push(newSheet);
       }
@@ -79,9 +73,6 @@ const runCutEngine = (pieces, sheet) => {
 
 export default function FurniturePro() {
   const [unit, setUnit] = useState("ft");
-  const [sheetType, setSheetType] = useState("8x4");
-
-  const sheet = SHEETS[sheetType];
 
   const [dims, setDims] = useState({
     L: 6,
@@ -90,11 +81,6 @@ export default function FurniturePro() {
   });
 
   const [rates, setRates] = useState(DEFAULT_RATES);
-
-  const [sunmica, setSunmica] = useState({
-    inside: true,
-    outside: true
-  });
 
   const [layout, setLayout] = useState({
     hangingHeight: 3.5,
@@ -118,12 +104,13 @@ export default function FurniturePro() {
   const H = toFeet(dims.H);
 
   // ================= HEIGHT =================
-  const totalDrawerHeight = layout.drawerHeight * layout.drawerCount;
+  let usedHeight = 0;
+  usedHeight += layout.hangingHeight;
 
-  const usedHeight =
-    layout.hangingHeight +
-    totalDrawerHeight +
-    layout.skirting;
+  const totalDrawerHeight = layout.drawerHeight * layout.drawerCount;
+  usedHeight += totalDrawerHeight;
+
+  usedHeight += layout.skirting;
 
   const remainingHeight = H - usedHeight;
 
@@ -133,97 +120,72 @@ export default function FurniturePro() {
       : 0;
 
   // ================= CUT LIST =================
-  const pieces = [
-    { l: H, w: D, t: "18", qty: 2 },
-    { l: L, w: D, t: "18", qty: 2 },
-    { l: L, w: D, t: "18", qty: layout.shelfCount },
-    { l: L, w: D / 2, t: "12", qty: layout.drawerCount },
-    { l: L, w: H, t: "6", qty: 1 }
-  ];
+  let pieces = [];
 
-  // ================= ENGINE =================
-  const result = runCutEngine(pieces, sheet);
+  pieces.push({ l: H, w: D, t: "18", qty: 2 });
+  pieces.push({ l: L, w: D, t: "18", qty: 2 });
 
-  let sheets18 = result["18"]?.length || 0;
-  let sheets12 = result["12"]?.length || 0;
-  let sheets6 = result["6"]?.length || 0;
+  pieces.push({
+    l: L,
+    w: D,
+    t: "18",
+    qty: layout.shelfCount
+  });
+
+  pieces.push({
+    l: L,
+    w: D / 2,
+    t: "12",
+    qty: layout.drawerCount
+  });
+
+  pieces.push({ l: L, w: H, t: "6", qty: 1 });
+
+  // ================= REAL ENGINE =================
+  const result = runCutEngine(pieces);
+
+  const sheets18 = result["18"]?.length || 0;
+  const sheets12 = result["12"]?.length || 0;
+  const sheets6 = result["6"]?.length || 0;
 
   let waste = 0;
-  Object.values(result).forEach(s =>
-    s.forEach(sheet =>
-      sheet.spaces.forEach(sp => {
-        waste += sp.w * sp.h;
-      })
-    )
-  );
-
-  // ================= LAMINATE =================
-  let laminateArea = 0;
-  if (sunmica.inside) laminateArea += L * H;
-  if (sunmica.outside) laminateArea += L * H;
-
-  const laminateSheets = Math.ceil(laminateArea / sheet.area);
-
-  // ================= HARDWARE =================
-  const hinges = 4;
-  const channels = layout.drawerCount;
-  const handles = layout.drawerCount + 2;
-
-  // ================= FEVICOL =================
-  const fevicolKg = Math.ceil(
-    (sheets18 + sheets12 + sheets6) / 2
-  );
+  Object.values(result).forEach((sheets) => {
+    sheets.forEach((sheet) => {
+      sheet.spaces.forEach((s) => {
+        waste += s.w * s.h;
+      });
+    });
+  });
 
   // ================= COST =================
   const totalCost =
     sheets18 * rates.ply18 +
     sheets12 * rates.ply12 +
-    sheets6 * rates.ply6 +
-    laminateSheets * rates.laminate +
-    fevicolKg * rates.fevicol +
-    hinges * rates.hinge +
-    channels * rates.channel +
-    handles * rates.handle;
-
-  // ================= SMART TIPS =================
-  const tips = [
-    "Use BWR ply for wardrobes",
-    "Reduce drawers to lower cost",
-    "Use 6x4 sheet for less waste in small jobs",
-    "Reuse leftover pieces for shelves",
-    "Keep shelf gap between 1.2–1.6 ft"
-  ];
+    sheets6 * rates.ply6;
 
   return (
     <Card>
-      <h2>Furniture PRO (Ultimate)</h2>
+      <h2>Furniture PRO (Advanced Wardrobe)</h2>
 
-      <Tabs value={unit} onChange={setUnit}
-        options={[
-          { label: "ft", value: "ft" },
-          { label: "inch", value: "inch" },
-          { label: "mm", value: "mm" }
-        ]}
-      />
-
-      <Tabs value={sheetType} onChange={setSheetType}
-        options={[
-          { label: "8×4", value: "8x4" },
-          { label: "6×4", value: "6x4" }
-        ]}
-      />
-
-      {/* KEEP YOUR EXISTING UI (no change) */}
+      {/* KEEP YOUR EXISTING UI EXACTLY SAME ABOVE */}
 
       <div className="result">
         <h4>Layout Result</h4>
-        <p>Remaining Height: {remainingHeight.toFixed(2)} ft</p>
-        <p>Shelf Gap: {shelfGap.toFixed(2)} ft</p>
 
+        <p>Remaining Height: {remainingHeight.toFixed(2)} ft</p>
+        <p>Auto Shelf Gap: {shelfGap.toFixed(2)} ft</p>
+
+        <h4>Material</h4>
+        <p>18mm Ply: {sheets18}</p>
+        <p>12mm Ply: {sheets12}</p>
+        <p>6mm Ply: {sheets6}</p>
+
+        {/* NEW: SHEET LEFTOVER */}
         <h4>Sheet-wise Leftover</h4>
-        {Object.keys(result).map(t => (
+        {Object.keys(result).map((t) => (
           <div key={t}>
             <p><b>{t}mm Ply</b></p>
+
             {result[t].map((sheet, i) => (
               <div key={i}>
                 <p>Sheet {i + 1}</p>
@@ -239,21 +201,16 @@ export default function FurniturePro() {
 
         <p>Waste: {waste.toFixed(2)} sqft</p>
 
-        <h4>Material</h4>
-        <p>18mm Ply: {sheets18}</p>
-        <p>12mm Ply: {sheets12}</p>
-        <p>6mm Ply: {sheets6}</p>
-        <p>Laminate: {laminateSheets}</p>
-        <p>Fevicol: {fevicolKg} kg</p>
-
         <h3>Total: ₹ {totalCost.toFixed(0)}</h3>
       </div>
 
+      {/* SMART TIPS */}
       <div className="result">
         <h4>Smart Tips</h4>
-        {tips.map((t, i) => (
-          <p key={i}>• {t}</p>
-        ))}
+        <p>• Keep shelf gap between 1.2–1.6 ft</p>
+        <p>• Reduce drawers to lower cost</p>
+        <p>• Use leftover pieces for smaller shelves</p>
+        <p>• Prefer 18mm ply for strength</p>
       </div>
     </Card>
   );
