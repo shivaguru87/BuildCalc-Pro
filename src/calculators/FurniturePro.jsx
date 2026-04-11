@@ -3,16 +3,30 @@ import Card from "../components/Card";
 import Input from "../components/Input";
 import Tabs from "../components/Tabs";
 
+// ================= STANDARD SHEETS =================
+const SHEET_OPTIONS = [
+  { label: "8 × 4", w: 4, h: 8 },
+  { label: "7 × 4", w: 4, h: 7 },
+  { label: "6 × 4", w: 4, h: 6 }
+];
+
+// ================= THICKNESS =================
+const THICKNESS = ["6", "12", "18"];
+
+// ================= DEFAULT RATES =================
 const DEFAULT_RATES = {
-  ply18: 2500,
-  ply12: 1800,
-  ply6: 1200
+  "18": 2500,
+  "12": 1800,
+  "6": 1200,
+  laminate: 1200,
+  fevicol: 120,
+  hinge: 80,
+  channel: 300,
+  handle: 150
 };
 
 // ================= CUT ENGINE =================
-const SHEET = { w: 4, h: 8 };
-
-const runCutEngine = (pieces) => {
+const runCutEngine = (pieces, sheet) => {
   let sheetsByT = {};
 
   const tryPlace = (spaces, L, W) => {
@@ -46,15 +60,17 @@ const runCutEngine = (pieces) => {
     for (let i = 0; i < p.qty; i++) {
       let placed = false;
 
-      for (let sheet of sheetsByT[p.t]) {
-        if (tryPlace(sheet.spaces, p.l, p.w)) {
+      for (let sheetObj of sheetsByT[p.t]) {
+        if (tryPlace(sheetObj.spaces, p.l, p.w)) {
           placed = true;
           break;
         }
       }
 
       if (!placed) {
-        let newSheet = { spaces: [{ w: SHEET.w, h: SHEET.h }] };
+        let newSheet = {
+          spaces: [{ w: sheet.w, h: sheet.h }]
+        };
         tryPlace(newSheet.spaces, p.l, p.w);
         sheetsByT[p.t].push(newSheet);
       }
@@ -65,7 +81,33 @@ const runCutEngine = (pieces) => {
 };
 
 export default function FurniturePro() {
+  const [tab, setTab] = useState("wardrobe");
+
+  return (
+    <Card>
+      <h2>Furniture PRO</h2>
+
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        options={[
+          { label: "Wardrobe", value: "wardrobe" },
+          { label: "Bed (soon)", value: "bed" },
+          { label: "Sofa (soon)", value: "sofa" }
+        ]}
+      />
+
+      {tab === "wardrobe" && <Wardrobe />}
+    </Card>
+  );
+}
+
+// ================= WARDROBE MODULE =================
+function Wardrobe() {
   const [unit, setUnit] = useState("ft");
+
+  const [sheetIndex, setSheetIndex] = useState(0);
+  const sheet = SHEET_OPTIONS[sheetIndex];
 
   const [dims, setDims] = useState({
     L: 6,
@@ -75,12 +117,22 @@ export default function FurniturePro() {
 
   const [layout, setLayout] = useState({
     hangingHeight: 3.5,
-    hangingFrom: "top",
     drawerHeight: 0.5,
     drawerCount: 2,
-    drawerFrom: "bottom",
     shelfCount: 3,
     skirting: 0.25
+  });
+
+  const [rates, setRates] = useState(DEFAULT_RATES);
+
+  const [sunmica, setSunmica] = useState({
+    inside: true,
+    outside: true,
+    left: true,
+    right: true,
+    top: true,
+    bottom: false,
+    back: false
   });
 
   // ================= UNIT =================
@@ -94,32 +146,14 @@ export default function FurniturePro() {
   const D = toFeet(dims.W);
   const H = toFeet(dims.H);
 
-  // ================= POSITION LOGIC =================
-  const drawerTotal = layout.drawerHeight * layout.drawerCount;
+  // ================= HEIGHT =================
+  const used =
+    layout.hangingHeight +
+    layout.drawerHeight * layout.drawerCount +
+    layout.skirting;
 
-  let topUsed = 0;
-  let bottomUsed = 0;
-
-  if (layout.hangingFrom === "top") {
-    topUsed += layout.hangingHeight;
-  } else {
-    bottomUsed += layout.hangingHeight;
-  }
-
-  if (layout.drawerFrom === "bottom") {
-    bottomUsed += drawerTotal;
-  } else {
-    topUsed += drawerTotal;
-  }
-
-  bottomUsed += layout.skirting;
-
-  const remainingHeight = H - (topUsed + bottomUsed);
-
-  const shelfGap =
-    layout.shelfCount > 0
-      ? remainingHeight / (layout.shelfCount + 1)
-      : 0;
+  const remaining = H - used;
+  const gap = remaining / (layout.shelfCount + 1);
 
   // ================= CUT LIST =================
   const pieces = [
@@ -130,31 +164,47 @@ export default function FurniturePro() {
     { l: L, w: H, t: "6", qty: 1 }
   ];
 
-  const result = runCutEngine(pieces);
+  const result = runCutEngine(pieces, sheet);
 
-  const sheets18 = result["18"]?.length || 0;
-  const sheets12 = result["12"]?.length || 0;
-  const sheets6 = result["6"]?.length || 0;
-
+  let sheetsCount = { "18": 0, "12": 0, "6": 0 };
   let waste = 0;
-  Object.values(result).forEach((sheets) =>
-    sheets.forEach((sheet) =>
-      sheet.spaces.forEach((s) => {
-        waste += s.w * s.h;
+
+  Object.keys(result).forEach(t => {
+    sheetsCount[t] = result[t].length;
+
+    result[t].forEach(s =>
+      s.spaces.forEach(sp => {
+        waste += sp.w * sp.h;
       })
-    )
+    );
+  });
+
+  // ================= COST =================
+  const laminateArea = L * H * (sunmica.inside + sunmica.outside);
+  const laminateSheets = Math.ceil(laminateArea / (sheet.w * sheet.h));
+
+  const fevicolKg = Math.ceil(
+    (sheetsCount["18"] + sheetsCount["12"] + sheetsCount["6"]) / 2
   );
 
+  const hinges = 4;
+  const channels = layout.drawerCount;
+  const handles = layout.drawerCount + 2;
+
   const totalCost =
-    sheets18 * DEFAULT_RATES.ply18 +
-    sheets12 * DEFAULT_RATES.ply12 +
-    sheets6 * DEFAULT_RATES.ply6;
+    sheetsCount["18"] * rates["18"] +
+    sheetsCount["12"] * rates["12"] +
+    sheetsCount["6"] * rates["6"] +
+    laminateSheets * rates.laminate +
+    fevicolKg * rates.fevicol +
+    hinges * rates.hinge +
+    channels * rates.channel +
+    handles * rates.handle;
 
   return (
-    <Card>
-      <h2>Furniture PRO</h2>
+    <div>
+      <h3>Wardrobe PRO</h3>
 
-      {/* UNIT */}
       <Tabs
         value={unit}
         onChange={setUnit}
@@ -165,7 +215,15 @@ export default function FurniturePro() {
         ]}
       />
 
-      {/* DIMENSIONS */}
+      <Tabs
+        value={sheetIndex}
+        onChange={setSheetIndex}
+        options={SHEET_OPTIONS.map((s, i) => ({
+          label: s.label,
+          value: i
+        }))}
+      />
+
       <Input label="Length" value={dims.L}
         onChange={(v) => setDims({ ...dims, L: v })} />
       <Input label="Depth" value={dims.W}
@@ -173,96 +231,51 @@ export default function FurniturePro() {
       <Input label="Height" value={dims.H}
         onChange={(v) => setDims({ ...dims, H: v })} />
 
-      {/* HANGING */}
-      <h4>Clothing Hanging</h4>
-      <Input label="Height (ft)"
-        value={layout.hangingHeight}
-        onChange={(v) =>
-          setLayout({ ...layout, hangingHeight: Number(v) })
-        } />
+      <h4>Layout</h4>
+      <Input label="Hanging Height" value={layout.hangingHeight}
+        onChange={(v) => setLayout({ ...layout, hangingHeight: Number(v) })} />
+      <Input label="Drawer Count" value={layout.drawerCount}
+        onChange={(v) => setLayout({ ...layout, drawerCount: Number(v) })} />
+      <Input label="Shelf Count" value={layout.shelfCount}
+        onChange={(v) => setLayout({ ...layout, shelfCount: Number(v) })} />
 
-      <Tabs
-        value={layout.hangingFrom}
-        onChange={(v) =>
-          setLayout({ ...layout, hangingFrom: v })
-        }
-        options={[
-          { label: "Top", value: "top" },
-          { label: "Bottom", value: "bottom" }
-        ]}
-      />
+      <h4>Material Required</h4>
+      <p>18mm Ply: {sheetsCount["18"]}</p>
+      <p>12mm Ply: {sheetsCount["12"]}</p>
+      <p>6mm Ply: {sheetsCount["6"]}</p>
+      <p>Laminate: {laminateSheets}</p>
+      <p>Fevicol: {fevicolKg} kg</p>
 
-      {/* DRAWERS */}
-      <h4>Drawers</h4>
-      <Input label="Drawer Count"
-        value={layout.drawerCount}
-        onChange={(v) =>
-          setLayout({ ...layout, drawerCount: Number(v) })
-        } />
+      <h4>Sheet-wise Leftover</h4>
+      {Object.keys(result).map(t => (
+        <div key={t}>
+          <b>{t}mm</b>
+          {result[t].map((sheet, i) => (
+            <div key={i}>
+              Sheet {i + 1}
+              {sheet.spaces.map((s, idx) => (
+                <p key={idx}>• {s.h.toFixed(2)} × {s.w.toFixed(2)}</p>
+              ))}
+            </div>
+          ))}
+        </div>
+      ))}
 
-      <Input label="Drawer Height (ft)"
-        value={layout.drawerHeight}
-        onChange={(v) =>
-          setLayout({ ...layout, drawerHeight: Number(v) })
-        } />
+      <p>Waste: {waste.toFixed(2)} sqft</p>
 
-      <Tabs
-        value={layout.drawerFrom}
-        onChange={(v) =>
-          setLayout({ ...layout, drawerFrom: v })
-        }
-        options={[
-          { label: "Bottom", value: "bottom" },
-          { label: "Top", value: "top" }
-        ]}
-      />
+      <h4>Hardware</h4>
+      <p>Hinges: {hinges}</p>
+      <p>Channels: {channels}</p>
+      <p>Handles: {handles}</p>
 
-      {/* SKIRTING */}
-      <h4>Skirting</h4>
-      <Input label="Skirting Height (ft)"
-        value={layout.skirting}
-        onChange={(v) =>
-          setLayout({ ...layout, skirting: Number(v) })
-        } />
+      <h3>Total: ₹ {totalCost.toFixed(0)}</h3>
 
-      {/* SHELVES */}
-      <h4>Shelves</h4>
-      <Input label="Shelf Count"
-        value={layout.shelfCount}
-        onChange={(v) =>
-          setLayout({ ...layout, shelfCount: Number(v) })
-        } />
-
-      {/* RESULT */}
       <div className="result">
-        <h4>Layout Result</h4>
-        <p>Remaining Height: {remainingHeight.toFixed(2)} ft</p>
-        <p>Shelf Gap: {shelfGap.toFixed(2)} ft</p>
-
-        <h4>Material</h4>
-        <p>18mm Ply: {sheets18}</p>
-        <p>12mm Ply: {sheets12}</p>
-        <p>6mm Ply: {sheets6}</p>
-
-        <h4>Sheet-wise Leftover</h4>
-        {Object.keys(result).map((t) => (
-          <div key={t}>
-            <b>{t}mm</b>
-            {result[t].map((sheet, i) => (
-              <div key={i}>
-                Sheet {i + 1}
-                {sheet.spaces.map((s, idx) => (
-                  <p key={idx}>• {s.h.toFixed(2)} × {s.w.toFixed(2)}</p>
-                ))}
-              </div>
-            ))}
-          </div>
-        ))}
-
-        <p>Waste: {waste.toFixed(2)} sqft</p>
-
-        <h3>Total: ₹ {totalCost.toFixed(0)}</h3>
+        <h4>Smart Tips</h4>
+        <p>• Use BWR ply for wardrobes</p>
+        <p>• Reduce drawers to save cost</p>
+        <p>• Use leftover pieces efficiently</p>
       </div>
-    </Card>
+    </div>
   );
 }
