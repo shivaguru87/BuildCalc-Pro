@@ -3,8 +3,30 @@ import Card from "../components/Card";
 import Input from "../components/Input";
 import Tabs from "../components/Tabs";
 
+// ================= SHEET SIZES =================
+const SHEET_SIZES = {
+  "8x4": { h: 8, w: 4 },
+  "7x4": { h: 7, w: 4 },
+  "6x4": { h: 6, w: 4 },
+  "8x3": { h: 8, w: 3 },
+  "6x3": { h: 6, w: 3 },
+  "5x5": { h: 5, w: 5 }
+};
+
+// ================= THICKNESS =================
+const THICKNESS = [
+  { label: "4mm", value: "4" },
+  { label: "6mm", value: "6" },
+  { label: "9mm", value: "9" },
+  { label: "12mm", value: "12" },
+  { label: "15mm", value: "15" },
+  { label: "18mm", value: "18" },
+  { label: "25mm", value: "25" }
+];
+
 export default function FurnitureEstimator() {
   const [unit, setUnit] = useState("ft");
+  const [sheetType, setSheetType] = useState("8x4");
 
   const [pieces, setPieces] = useState([
     { l: "", w: "", t: "18", qty: "1" }
@@ -29,116 +51,128 @@ export default function FurnitureEstimator() {
     return v;
   };
 
-  const SHEET_W = 4;
-  const SHEET_H = 8;
+  const format = (l, w) => {
+    const toInch = (ft) => Math.round(ft * 12);
+    return `${l}' (${toInch(l)}") × ${w}' (${toInch(w)}")`;
+  };
 
-  // ================= GLOBAL CUT ENGINE =================
+  // ================= CUT ENGINE =================
   const simulate = () => {
-    let sheets = {
-      "6": [],
-      "12": [],
-      "18": []
-    };
+    let sheetsByThickness = {};
 
-    let sheetCount = {
-      "6": 0,
-      "12": 0,
-      "18": 0
-    };
+    THICKNESS.forEach(t => {
+      sheetsByThickness[t.value] = [];
+    });
 
-    let stepResults = [];
+    const SHEET = SHEET_SIZES[sheetType];
 
-    pieces.forEach((p, index) => {
+    pieces.forEach((p) => {
       const L = toFeet(p.l);
       const W = toFeet(p.w);
       const qty = Number(p.qty || 0);
       const t = p.t;
 
-      if (!sheets[t].length) {
-        sheets[t].push({ w: SHEET_W, h: SHEET_H });
-        sheetCount[t]++;
+      if (!sheetsByThickness[t].length) {
+        sheetsByThickness[t].push({
+          spaces: [{ w: SHEET.w, h: SHEET.h }]
+        });
       }
 
       for (let q = 0; q < qty; q++) {
         let placed = false;
 
-        for (let i = 0; i < sheets[t].length; i++) {
-          let space = sheets[t][i];
+        for (let s = 0; s < sheetsByThickness[t].length; s++) {
+          let sheet = sheetsByThickness[t][s];
 
-          let fitNormal = L <= space.h && W <= space.w;
-          let fitRotate = W <= space.h && L <= space.w;
+          for (let i = 0; i < sheet.spaces.length; i++) {
+            let space = sheet.spaces[i];
 
-          if (fitNormal || fitRotate) {
-            sheets[t].splice(i, 1);
+            let fitNormal = L <= space.h && W <= space.w;
+            let fitRotate = W <= space.h && L <= space.w;
 
-            let cutL = fitNormal ? L : W;
-            let cutW = fitNormal ? W : L;
+            if (fitNormal || fitRotate) {
+              sheet.spaces.splice(i, 1);
 
-            const right = {
-              w: space.w - cutW,
-              h: cutL
-            };
+              let cutL = fitNormal ? L : W;
+              let cutW = fitNormal ? W : L;
 
-            const bottom = {
-              w: space.w,
-              h: space.h - cutL
-            };
+              // LENGTH-FIRST CUT (IMPORTANT)
+              const bottom = {
+                w: space.w,
+                h: space.h - cutL
+              };
 
-            if (right.w > 0 && right.h > 0) sheets[t].push(right);
-            if (bottom.w > 0 && bottom.h > 0) sheets[t].push(bottom);
+              const right = {
+                w: space.w - cutW,
+                h: cutL
+              };
 
-            placed = true;
-            break;
+              if (bottom.w > 0 && bottom.h > 0) sheet.spaces.push(bottom);
+              if (right.w > 0 && right.h > 0) sheet.spaces.push(right);
+
+              placed = true;
+              break;
+            }
           }
+
+          if (placed) break;
         }
 
-        // ✅ NEW SHEET ONLY IF NEEDED
+        // NEW SHEET
         if (!placed) {
-          sheets[t].push({ w: SHEET_W, h: SHEET_H });
-          sheetCount[t]++;
+          let newSheet = {
+            spaces: []
+          };
+
+          let base = { w: SHEET.w, h: SHEET.h };
+
+          let cutL = L;
+          let cutW = W;
+
+          const bottom = {
+            w: base.w,
+            h: base.h - cutL
+          };
+
+          const right = {
+            w: base.w - cutW,
+            h: cutL
+          };
+
+          if (bottom.w > 0 && bottom.h > 0) newSheet.spaces.push(bottom);
+          if (right.w > 0 && right.h > 0) newSheet.spaces.push(right);
+
+          sheetsByThickness[t].push(newSheet);
         }
       }
-
-      // snapshot per step
-      const leftoverArea = sheets[t].reduce(
-        (sum, s) => sum + s.w * s.h,
-        0
-      );
-
-      const blocks = sheets[t].map(
-        (s) => `${s.w.toFixed(2)} × ${s.h.toFixed(2)}`
-      );
-
-      stepResults.push({
-        index,
-        leftoverArea,
-        blocks
-      });
     });
 
     // ================= FINAL =================
-    let totalSheets =
-      sheetCount["6"] + sheetCount["12"] + sheetCount["18"];
-
-    let finalBlocks = [];
+    let totalSheets = 0;
     let finalArea = 0;
+    let finalSheets = [];
 
-    Object.keys(sheets).forEach((t) => {
-      sheets[t].forEach((s) => {
-        finalBlocks.push(`${s.w.toFixed(2)} × ${s.h.toFixed(2)}`);
-        finalArea += s.w * s.h;
+    Object.keys(sheetsByThickness).forEach((t) => {
+      sheetsByThickness[t].forEach((sheet, index) => {
+        totalSheets++;
+
+        const blocks = sheet.spaces.map((s) => {
+          finalArea += s.w * s.h;
+          return format(s.h, s.w);
+        });
+
+        finalSheets.push({
+          thickness: t,
+          sheetNo: totalSheets,
+          blocks
+        });
       });
     });
 
-    return {
-      stepResults,
-      totalSheets,
-      finalBlocks,
-      finalArea
-    };
+    return { totalSheets, finalArea, finalSheets };
   };
 
-  const { stepResults, totalSheets, finalBlocks, finalArea } = simulate();
+  const { totalSheets, finalArea, finalSheets } = simulate();
 
   // ================= COST =================
   const materialCost = totalSheets * 2500;
@@ -149,6 +183,7 @@ export default function FurnitureEstimator() {
     <Card>
       <h3>Custom Furniture PRO (Final Engine)</h3>
 
+      {/* UNIT */}
       <Tabs
         value={unit}
         onChange={setUnit}
@@ -159,52 +194,60 @@ export default function FurnitureEstimator() {
         ]}
       />
 
-      {pieces.map((p, i) => {
-        const res = stepResults[i] || {};
+      {/* SHEET SIZE */}
+      <Tabs
+        value={sheetType}
+        onChange={setSheetType}
+        options={[
+          { label: "8 × 4", value: "8x4" },
+          { label: "7 × 4", value: "7x4" },
+          { label: "6 × 4", value: "6x4" },
+          { label: "8 × 3", value: "8x3" },
+          { label: "6 × 3", value: "6x3" },
+          { label: "5 × 5", value: "5x5" }
+        ]}
+      />
 
-        return (
-          <div key={i} className="card">
-            <h4>Piece {i + 1}</h4>
+      {/* PIECES */}
+      {pieces.map((p, i) => (
+        <div key={i} className="card">
+          <h4>Piece {i + 1}</h4>
 
-            <Input label="Length" unit={unit} value={p.l} onChange={(v) => updatePiece(i, "l", v)} />
-            <Input label="Width" unit={unit} value={p.w} onChange={(v) => updatePiece(i, "w", v)} />
+          <Input label="Length" unit={unit} value={p.l}
+            onChange={(v) => updatePiece(i, "l", v)} />
 
-            <Tabs
-              value={p.t}
-              onChange={(v) => updatePiece(i, "t", v)}
-              options={[
-                { label: "6mm", value: "6" },
-                { label: "12mm", value: "12" },
-                { label: "18mm", value: "18" }
-              ]}
-            />
+          <Input label="Width" unit={unit} value={p.w}
+            onChange={(v) => updatePiece(i, "w", v)} />
 
-            <Input label="Quantity" value={p.qty} onChange={(v) => updatePiece(i, "qty", v)} />
+          <Tabs
+            value={p.t}
+            onChange={(v) => updatePiece(i, "t", v)}
+            options={THICKNESS}
+          />
 
-            {/* STEP LEFTOVER */}
-            <div className="result">
-              <p><b>Remaining Area:</b> {res.leftoverArea?.toFixed(2)} sqft</p>
-
-              {res.blocks?.map((b, idx) => (
-                <p key={idx}>• {b}</p>
-              ))}
-            </div>
-          </div>
-        );
-      })}
+          <Input label="Quantity" value={p.qty}
+            onChange={(v) => updatePiece(i, "qty", v)} />
+        </div>
+      ))}
 
       <button className="primary" onClick={addPiece}>
         + Add Piece
       </button>
 
-      {/* FINAL LEFTOVER */}
+      {/* FINAL RESULT */}
       <div className="result">
-        <h4>Final Remaining Material</h4>
-        <p>Total Leftover: {finalArea.toFixed(2)} sqft</p>
+        <h4>Sheet-wise Leftover</h4>
 
-        {finalBlocks.map((b, i) => (
-          <p key={i}>• {b}</p>
+        {finalSheets.map((s, i) => (
+          <div key={i}>
+            <p><b>Sheet {s.sheetNo} ({s.thickness}mm)</b></p>
+            {s.blocks.map((b, idx) => (
+              <p key={idx}>• {b}</p>
+            ))}
+          </div>
         ))}
+
+        <p><b>Total Leftover:</b> {finalArea.toFixed(2)} sqft</p>
       </div>
 
       {/* COST */}
